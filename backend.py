@@ -1,7 +1,9 @@
-from datetime import datetime
-from setting import conectar_banco
+import mysql.connector
+from mysql.connector import Error
+from settings import conectar_banco
+
 import bcrypt
-from mysql.connector import error
+from datetime import datetime
 
 def menu():
     while True:
@@ -59,14 +61,10 @@ def cadastro_usuario():
 
 
 
-    conexao = None 
-    cursor = None
+    conexao = conectar_banco()
+    cursor = conexao.cursor()
 
     try:
-        
-        conexao = conectar_banco()
-        cursor = conexao.cursor()
-
         cursor.execute( 'SELECT 1 FROM usuarios WHERE username = %s OR email_usuario = %s', (username, email))
         
         
@@ -88,15 +86,16 @@ def cadastro_usuario():
         print('Usuário cadastrado com sucesso!')
         
 
-    except mysql.connector.Error as erro:
-        print(f'Erro ao cadastrar o usuario {erro}')
+    except mysql.connector.Error as err:
+        print(f'Erro ao cadastrar o usuario {err}')
         conexao.rollback()
     
     finally:
-        if cursor:  
+        if cursor:
             cursor.close()
         if conexao and conexao.is_connected():
             conexao.close()
      # Garante que a conexão será fechada mesmo se houver erro   
 
 
+menu()
