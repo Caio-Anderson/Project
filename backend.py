@@ -97,7 +97,8 @@ def cadastro_usuario():
             conexao.close()
      # Garante que a conexão será fechada mesmo se houver erro   
 
-def agendamento_usuario():
+def agendamento_usuario(usuario_id):
+
 
     print('\n<<<<<<<Seja bem-vindo ao agendamento da escola Jabari>>>>>>')
     print('\nEscolha a seguir o dia, horário, estilo de dança e seu grau de experiência com o estilo')
@@ -126,24 +127,9 @@ def agendamento_usuario():
             print('Formato inválido. Use YYYY-MM-DD(ex 2025-05-24.)')
 
     
-    """"
-    try:
-       
-       conexao = conectar_banco()
-       cursor = conexao.cursor()
-       
-       cursor.execute( 'SELECT 1 FROM agendamentos WHERE dia = %s and horario = %s', (dia, horario))
-        
-        
-       if cursor.fetchone():
-        print('Dia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário')
-        return
-       """
 
 
-    
-    
-    
+
     while True:
         horario = input('Digite o horário desejado (no formato (HH:MM)): ')
         try:
@@ -159,7 +145,36 @@ def agendamento_usuario():
         except:
             print('Formato invalido. Use HH:MM (ex:10:40).')
 
-   
+    
+    try:
+       conexao = conectar_banco()
+       cursor = conexao.cursor()
+       
+       cursor.execute( 'SELECT 1 FROM agendamentos WHERE dia = %s AND horario = %s AND usuario_id = %s', (dia, horario, usuario_id))
+        
+        
+       if cursor.fetchone():
+        print('Dia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário')
+        return
+       
+       comando = ('''INSERT INTO agendamentos (dia, horario, usuario_id)
+                VALUES (%s,%s,%s)''')
+       valores = (dia,horario)
+       cursor.execute (comando,valores)
+       
+       conexao.commit()
+       print('Agendamentos realizado com sucesso')
+    
+    
+    except mysql.connector.Error as err:
+        print(f'Erro no agendamento{err}')
+        conexao.rollback()
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
     
     
     while True:
@@ -174,36 +189,56 @@ def agendamento_usuario():
         else:
             print('Estilo não disponivel. Selecione um estilo da lista')
         
+    
+    
+    
+    
+    
     print(f'\nAula de {estilo_escolhido} agendada para o {dia} às {horario}')
     print(f'\nCaso tenha interesse em outro estilo de dança ou em fazer mais aulas, faça outro agendamento!. Tenha um ótimo dia e obrigado pela preferência\n')
 
 
 
+
+
 def login_usuario():
+
+    try: 
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+
+        username = input('Digite seu nome de usuário >>').lower().strip()
+        senha = input('Digite sua senha >>').strip()
+
+        cursor.execute('SELECT id_usuario, senha FROM usuarios WHERE username = %s', (username,))
+        resultado = cursor.fetchone()
+
+        if credenciais_validas:
+            cursor.execute('SELECT id_usuario FROM usuarios WHERE username = %s', (username,))
+            usuario_id = cursor.fetchone()[0]
+            agendamento_usuario(usuario_id)  # Passa o ID para o agendamento
+
+        if resultado:
+            usuario_id, senha_hash = resultado
+            if bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
+                print('Login bem sucedido!')
+                if username == 'admin':
+                    menu_adm()
+            
+                else:
+                    agendamento_usuario(usuario_id)
+                return # Sai da função após login bem-sucedido
     
-    conexao = conectar_banco()
-    cursor = conexao.cursor()
+    except mysql.connector.Error as err:
+        print(f'Erro ao cadastrar o usuario {err}')
+        conexao.rollback()
 
-    username = input('Digite seu nome de usuário >>').lower().strip()
-    senha = input('Digite sua senha >>').strip()
-
-    cursor.execute('SELECT senha FROM usuarios WHERE username = %s',(username,))
-    comando = cursor.fetchone()
-
-    if comando and bcrypt.checkpw(senha.encode('utf-8'), comando[0].encode('utf-8')):
-        print('Login bem sucedido!')
-        agendamento_usuario()
-    
-    elif username == 'Admin':
-        menu_adm()
-
-    else:
-        print('Senha ou Usuario incorretos!')
+ 
         
 
     
-    cursor.close()
-    conexao.close()
+        cursor.close()
+        conexao.close()
 
 
 
