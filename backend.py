@@ -65,14 +65,14 @@ def cadastro_usuario():
     cursor = conexao.cursor()
 
     try:
-        cursor.execute( 'SELECT 1 FROM usuarios WHERE username = %s OR email_usuario = %s', (username, email))
+        cursor.execute( 'SELECT 1 FROM tbl_usuarios WHERE username = %s OR email_usuario = %s', (username, email))
         
         
         if cursor.fetchone():
             print('Username ou e-mail já cadastrado!')
             return # Sai da função se já existir
         
-        comando = '''INSERT INTO usuarios 
+        comando = '''INSERT INTO tbl_usuarios 
                      (nome_usuario,email_usuario, telefone_usuario, username, senha) 
                      VALUES (%s, %s,%s, %s, %s)'''
         
@@ -150,20 +150,19 @@ def agendamento_usuario(usuario_id):
        conexao = conectar_banco()
        cursor = conexao.cursor()
        
-       cursor.execute( 'SELECT 1 FROM agendamentos WHERE dia = %s AND horario = %s AND usuario_id = %s', (dia, horario, usuario_id))
+       cursor.execute( 'SELECT 1 FROM tbl_agendamentos WHERE dia = %s AND horario = %s AND usuario_id = %s', (dia, horario, usuario_id))
         
         
        if cursor.fetchone():
-        print('Dia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário')
+        print('\nDia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário\n')
         return
        
-       comando = ('''INSERT INTO agendamentos (dia, horario, usuario_id)
+       comando = ('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id)
                 VALUES (%s,%s,%s)''')
-       valores = (dia,horario)
+       valores = (dia,horario, usuario_id)
        cursor.execute (comando,valores)
        
        conexao.commit()
-       print('Agendamentos realizado com sucesso')
     
     
     except mysql.connector.Error as err:
@@ -210,13 +209,9 @@ def login_usuario():
         username = input('Digite seu nome de usuário >>').lower().strip()
         senha = input('Digite sua senha >>').strip()
 
-        cursor.execute('SELECT id_usuario, senha FROM usuarios WHERE username = %s', (username,))
+        cursor.execute('SELECT id_usuario, senha FROM tbl_usuarios WHERE username = %s', (username,))
         resultado = cursor.fetchone()
 
-        if credenciais_validas:
-            cursor.execute('SELECT id_usuario FROM usuarios WHERE username = %s', (username,))
-            usuario_id = cursor.fetchone()[0]
-            agendamento_usuario(usuario_id)  # Passa o ID para o agendamento
 
         if resultado:
             usuario_id, senha_hash = resultado
@@ -227,7 +222,11 @@ def login_usuario():
             
                 else:
                     agendamento_usuario(usuario_id)
-                return # Sai da função após login bem-sucedido
+            else:
+                print('Senha incorreta!')
+        
+        else:
+            print('Usuário não encontrado')
     
     except mysql.connector.Error as err:
         print(f'Erro ao cadastrar o usuario {err}')
