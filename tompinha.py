@@ -82,3 +82,17 @@ while True:
         print('Aluno',email,'inserido com sucesso!')
         cursorbd.close()
         db.close()
+
+""""
+try:
+       
+       conexao = conectar_banco()
+       cursor = conexao.cursor()
+       
+       cursor.execute( 'SELECT 1 FROM agendamentos WHERE dia = %s and horario = %s', (dia, horario))
+        
+        
+       if cursor.fetchone():
+        print('Dia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário')
+        return
+       """
