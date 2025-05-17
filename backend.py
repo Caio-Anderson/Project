@@ -8,6 +8,20 @@ from datetime import datetime, date, time
 
 def menu():
     while True:
+
+        logo = '''
+
+     ██╗ █████╗ ██████╗  █████╗ ██████╗ ██╗
+     ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗██║
+     ██║███████║██████╔╝███████║██████╔╝██║
+██   ██║██╔══██║██╔══██╗██╔══██║██╔══██╗██║
+╚█████╔╝██║  ██║██████╔╝██║  ██║██║  ██║██║
+ ╚════╝ ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝
+                                           
+'''
+        print(logo)
+    
+        
         print('Olá seja bem vindo a escola de dança Jabari')
         print('Para agendar uma aula precisamos fazer um cadastro primeiro, Após o cadastro execute o login para agendar sua aula')
         print('\n1 - login')
@@ -186,11 +200,6 @@ def agendamento_usuario(usuario_id):
             print('\nDia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário\n')
             return
        
-        cursor.execute(''' SELECT 1 FROM tbl_agendamentos WHERE dia = %s AND horario = %s''', (dia, horario))
-    
-        if cursor.fetchone():
-         print('\nHorário já ocupado por outro aluno! Escolha outro.')
-         return
  
        
         cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento) VALUES (%s,%s,%s, %s)''',(dia, horario, usuario_id, estilo_escolhido))
@@ -229,7 +238,7 @@ def listar_cadastro():
 
         if resultados:
             print('\n' + '='*60)
-            print('LISTA DE CADASTROS'.center(60))
+            print('📝LISTA DE CADASTROS'.center(60))
             print('='*60)
 
             print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
