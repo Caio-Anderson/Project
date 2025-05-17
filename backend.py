@@ -193,7 +193,7 @@ def agendamento_usuario(usuario_id):
         conexao = conectar_banco()
         cursor = conexao.cursor()
        
-        cursor.execute( '''SELECT 1 FROM tbl_agendamentos WHERE dia = %s AND horario = %s AND usuario_id = %s''', (dia, horario, usuario_id))
+        cursor.execute( '''SELECT 1 FROM tbl_agendamentos WHERE dia = %s AND horario = %s AND usuario_id = %s ''', (dia, horario, usuario_id))
         
         
         if cursor.fetchone():
@@ -205,7 +205,7 @@ def agendamento_usuario(usuario_id):
         cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento) VALUES (%s,%s,%s, %s)''',(dia, horario, usuario_id, estilo_escolhido))
        
 
-        cursor.execute("UPDATE tbl_usuarios SET dificuldade_id = %s WHERE id_usuario = %s",(dificuldade_id, usuario_id))
+        cursor.execute('UPDATE tbl_usuarios SET dificuldade_id = %s WHERE id_usuario = %s',(dificuldade_id, usuario_id))
 
         conexao.commit()
         print(f'\nAula de {estilo_escolhido} agendada para o {dia} às {horario}')
@@ -260,6 +260,67 @@ def listar_cadastro():
 
 
 
+def atualizar_cadastro():
+    listar_cadastro()
+    
+    usuario_id = int(input('Digite o ID do usuário que deseja atualizar os dados >> '))
+
+    conexao  = conectar_banco()
+    if not conexao:
+        return
+    
+    try:
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute('SELECT tbl_usuarios.id_usuario, tbl_usuarios.nome_usuario, tbl_usuarios.email_usuario, tbl_usuarios.telefone_usuario FROM tbl_usuarios WHERE id_usuario = %s', (usuario_id,))
+        usuario = cursor.fetchone()
+
+        if not usuario:
+            print('Usuário não encontrado!')
+            return
+
+        print('\nDados Atuais')
+        print(tabulate([usuario], headers='keys', tablefmt= 'fancy_grid'))
+    
+        print('\nCampos disponivéis para alteração: ')
+
+        campos = {'1': ('nome_usuario', 'nome'), '2': ('email_usuario', 'email'), '3': ('telefone_usuario', 'Telefone')} #dicionario para armazenar meus campos de alteração
+    
+        for key, (coluna_transformacao, transformacao) in campos.items(): #a key é o número que eu atribui dentro da variavel campos
+            print(f'{key} - {transformacao}')  #o número 1 é para ele pegar dentro do dicionario, o texto para exibir para o usuario se fosse 0 mostraria o campo do banco de dados
+
+
+        campo_escolhido = input('\nDigite o número do campo que deseja atualizar >>  ')
+
+        if not campo_escolhido in campos:
+            print('Campo inexistente ou erro de digitação')
+            return
+
+        transformacao = campos[campo_escolhido][1] #olha o dicionario e procura o nome do campo que esta dentro do mysql
+        atualizacao = input(f'Digite o novo {transformacao} >> ') #faz com que a função campos receba o número no campo escolhido e busque no dicionario o nome do campo
+
+
+        coluna_transformacao = campos[campo_escolhido][0]
+
+        if coluna_transformacao not in ('nome_usuario', 'email_usuario', 'telefone_usuario'):
+            raise ValueError('Tentativa negada')
+        
+        comando = "UPDATE tbl_usuarios SET  `{}` = %s WHERE id_usuario = %s".format(coluna_transformacao)    
+        cursor.execute(comando, (atualizacao, usuario_id))
+        
+        conexao.commit()
+        print('\nDados atualizados com sucesso!')
+                                                                                      
+        
+    except mysql.connector.Error as err:
+        print(f'Erro no agendamento{err}')
+        conexao.rollback()
+    
+    finally:
+            cursor.close()
+            conexao.close()
+
+
 
 def menu_adm():
 
@@ -287,9 +348,6 @@ def menu_adm():
             
         else:
             print('Opção inválida')
-
-
-
 
 
 
