@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 from settings import conectar_banco
 
+from tabulate import tabulate
 import bcrypt
 from datetime import datetime, date, time
 
@@ -29,7 +30,7 @@ def menu():
 
 
 def cadastro_usuario():
-    print('\n<<<<<< Cadastro do Usuário >>>>>>')
+    print('\n<<<<<< Cadastro do Usuário >>>>>>\n')
 
     while True:
         nome = input('Digite Seu nome >>').strip()
@@ -83,7 +84,7 @@ def cadastro_usuario():
         
         
         conexao.commit()
-        print('Usuário cadastrado com sucesso!')
+        print('Usuário cadastrado com sucesso!\n')
         
 
     except mysql.connector.Error as err:
@@ -146,55 +147,139 @@ def agendamento_usuario(usuario_id):
             print('Formato invalido. Use HH:MM (ex:10:40).')
 
     
+    while True:
+        
+        estilos_disponiveis = ['1 - BLACK CHARME', '2 - HIP HOP', '3 - AFRO BEAT' ]
+        print(f'Estes são nossos estilos de dança disponivéis!')
+        print('\n'.join(estilos_disponiveis))
+
+        estilo_escolhido = int(input('Digite o número de dança escolhido: '))
+        if estilo_escolhido in (1, 2, 3):
+            estilo_agendamento = int(estilo_escolhido)
+            break
+        else:
+            print('Estilo não disponivel. Selecione um estilo da lista')
+
+    
+    
+    while True:
+        dificuldades = ['1 - iniciante', '2 - intermediário', '3 - avançado']
+        print('Por favor insira abaixo o nivel que você se encontra em relação a aula')
+        print('\n'.join(dificuldades))
+
+        dificuldade_escolhida = input('Digite número do seu nivel em relação a aula: ')
+        if dificuldade_escolhida in ('1', '2', '3' ):
+            dificuldade_id = int(dificuldade_escolhida)
+            break
+        else:
+            print('Por favor selecione um dos niveis presentes na lista')
+    
+
     try:
-       conexao = conectar_banco()
-       cursor = conexao.cursor()
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
        
-       cursor.execute( 'SELECT 1 FROM tbl_agendamentos WHERE dia = %s AND horario = %s AND usuario_id = %s', (dia, horario, usuario_id))
+        cursor.execute( '''SELECT 1 FROM tbl_agendamentos WHERE dia = %s AND horario = %s AND usuario_id = %s''', (dia, horario, usuario_id))
         
         
-       if cursor.fetchone():
-        print('\nDia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário\n')
-        return
+        if cursor.fetchone():
+            print('\nDia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário\n')
+            return
        
-       comando = ('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id)
-                VALUES (%s,%s,%s)''')
-       valores = (dia,horario, usuario_id)
-       cursor.execute (comando,valores)
+        cursor.execute(''' SELECT 1 FROM tbl_agendamentos WHERE dia = %s AND horario = %s''', (dia, horario))
+    
+        if cursor.fetchone():
+         print('\nHorário já ocupado por outro aluno! Escolha outro.')
+         return
+ 
        
-       conexao.commit()
+        cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento) VALUES (%s,%s,%s, %s)''',(dia, horario, usuario_id, estilo_escolhido))
+       
+
+        cursor.execute("UPDATE tbl_usuarios SET dificuldade_id = %s WHERE id_usuario = %s",(dificuldade_id, usuario_id))
+
+        conexao.commit()
+        print(f'\nAula de {estilo_escolhido} agendada para o {dia} às {horario}')
+        print(f'\nCaso tenha interesse em outro estilo de dança ou em fazer mais aulas, faça outro agendamento!. Tenha um ótimo dia e obrigado pela preferência\n')
     
+    except mysql.connector.Error as err:
+      print(f'Erro no agendamento{err}')
+      conexao.rollback()
     
+    finally:
+        cursor.close()
+        conexao.close()
+
+
+
+
+
+def listar_cadastro():
+    
+    conexao = conectar_banco()
+    if not conexao:
+        return #volta pro menu de adm
+
+    try:
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute ('''SELECT id_usuario as "ID", nome_usuario as "Nome",
+                        email_usuario as "E-mail",telefone_usuario as "Telefone",
+                        DATE_FORMAT(criado_em, '%%d/%%m/%%Y %%H:%%i') as "Cadastrado em" FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
+        resultados = cursor.fetchall()
+
+        if resultados:
+            print('\n' + '='*60)
+            print('LISTA DE CADASTROS'.center(60))
+            print('='*60)
+
+            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+            print(f'\nTotal de Cadastros: {len(resultados)}')
+
+        else:
+         print('Nenhum cadastro registrado ou encontrado')
+
+
+
     except mysql.connector.Error as err:
         print(f'Erro no agendamento{err}')
         conexao.rollback()
     
     finally:
-        if cursor:
             cursor.close()
-        if conexao and conexao.is_connected():
             conexao.close()
-    
+
+
+
+
+
+def menu_adm():
+
+    print('Olá seja bem vindo admin!👑, O que deseja fazer hoje?')
     
     while True:
-        estilos_disponiveis = ['HIP HOP', 'BLACK CHARME', 'AFRO BEAT' ]
-        print(f'Estes são nossos estilos de dança disponivéis!')
-        print('\n'.join(estilos_disponiveis))
-
-        estilo_escolhido = input('Digite o estilo de dança escolhido: ').strip().upper()
-        if estilo_escolhido in estilos_disponiveis:
-            print(f'Você escolheu o estilo {estilo_escolhido}')
-            break
-        else:
-            print('Estilo não disponivel. Selecione um estilo da lista')
         
-    
-    
-    
-    
-    
-    print(f'\nAula de {estilo_escolhido} agendada para o {dia} às {horario}')
-    print(f'\nCaso tenha interesse em outro estilo de dança ou em fazer mais aulas, faça outro agendamento!. Tenha um ótimo dia e obrigado pela preferência\n')
+        print('\n1 - Listar cadastros')
+        print('2 - atualizar cadastros')
+        print('3 - excluir cadastros')
+        print('4 - Sair e voltar para o menu principal')
+        opcao = int(input('Digite o número do que deseja fazer >> '))
+
+        if opcao == 1:
+            listar_cadastro()
+
+        elif opcao == 2:
+            atualizar_cadastro()
+
+        elif opcao == 3:
+            excluir_cadastro()
+
+        elif opcao == 4:
+            return #faz com que eu volte para o menu sem precisar executa-lo novamente
+            
+        else:
+            print('Opção inválida')
+
+
 
 
 
@@ -221,7 +306,7 @@ def login_usuario():
                     menu_adm()
             
                 else:
-                    agendamento_usuario(usuario_id)
+                    agendamento_usuario(usuario_id,)
             else:
                 print('Senha incorreta!')
         
@@ -240,4 +325,7 @@ def login_usuario():
         conexao.close()
 
 
+
+if __name__ == '__main__':
+    print('Erro utilize o main.py para executar o código')
 
