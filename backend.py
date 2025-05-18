@@ -98,7 +98,7 @@ def cadastro_usuario():
         
         
         conexao.commit()
-        print('Usuário cadastrado com sucesso!\n')
+        print('\nUsuário cadastrado com sucesso!\n')
         
 
     except mysql.connector.Error as err:
@@ -115,7 +115,7 @@ def cadastro_usuario():
 def agendamento_usuario(usuario_id):
 
 
-    print('\n<<<<<<<Seja bem-vindo ao agendamento da escola Jabari>>>>>>')
+    print('\n<<<<<<<Seja bem-vindo ao agendamento da escola Jabari>>>>>>\n')
     print('\nEscolha a seguir o dia, horário, estilo de dança e seu grau de experiência com o estilo')
 
     while True:
@@ -233,7 +233,7 @@ def listar_cadastro():
         cursor = conexao.cursor(dictionary=True)
         cursor.execute ('''SELECT id_usuario as "ID", nome_usuario as "Nome",
                         email_usuario as "E-mail",telefone_usuario as "Telefone",
-                        DATE_FORMAT(criado_em, '%%d/%%m/%%Y %%H:%%i') as "Cadastrado em" FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
+                        DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i') as "Cadastrado em" FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
         resultados = cursor.fetchall()
 
         if resultados:
@@ -305,7 +305,7 @@ def atualizar_cadastro():
         if coluna_transformacao not in ('nome_usuario', 'email_usuario', 'telefone_usuario'):
             raise ValueError('Tentativa negada')
         
-        comando = "UPDATE tbl_usuarios SET  `{}` = %s WHERE id_usuario = %s".format(coluna_transformacao)    
+        comando = "UPDATE tbl_usuarios   SET  `{}` = %s WHERE id_usuario = %s".format(coluna_transformacao)    
         cursor.execute(comando, (atualizacao, usuario_id))
         
         conexao.commit()
@@ -319,6 +319,48 @@ def atualizar_cadastro():
     finally:
             cursor.close()
             conexao.close()
+
+
+def excluir_cadastro():
+    listar_cadastro()
+
+    
+    usuario_id = int(input('Digite o id do usuario que gostaria de deletar >> '))
+
+    confirmacao = input('Deseja realmente deletar este usuario? se sim digite:(s) se não digit (n) >> ').lower().strip()
+    
+    if confirmacao != 's':
+        print('Deleção cancelada')
+        return
+    
+
+    conexao = conectar_banco()
+    if not conexao:
+        return
+    
+    try:
+        
+        cursor = conexao.cursor()
+        cursor.execute('DELETE FROM tbl_usuarios WHERE id_usuario = %s',(usuario_id,))
+
+        if cursor.rowcount >0:
+            conexao.commit()
+            print('\nUsuário deletado com sucesso')
+        
+        else:
+            print('Nenhum usuário deletado, ou id não foi encotrado')
+    
+
+         
+    except mysql.connector.Error as err:
+        print(f'Erro no agendamento{err}')
+        conexao.rollback()
+    
+    finally:
+            cursor.close()
+            conexao.close()
+
+
 
 
 
