@@ -24,9 +24,9 @@ def menu():
         
         print('Olá seja bem vindo a escola de dança Jabari')
         print('Para agendar uma aula precisamos fazer um cadastro primeiro, Após o cadastro execute o login para agendar sua aula')
-        print('\n1 - login')
-        print('2 - cadastro')
-        print('3 - Sair')
+        print('\n1 - login 🔒')
+        print('2 - cadastro 🖋️')
+        print('3 - Sair 👋')
         opcao = int(input('Digite a opção >> '))
 
         if opcao == 1:
@@ -39,7 +39,7 @@ def menu():
             print('Saindo...')
             break
         else:
-         print('Opção inválida')
+         print('Opção inválida ❌')
          
 
 
@@ -84,7 +84,7 @@ def cadastro_usuario():
         
         
         if cursor.fetchone():
-            print('Username ou e-mail já cadastrado!')
+            print('Username ou e-mail já cadastrado! ❌')
             return # Sai da função se já existir
         
         comando = '''INSERT INTO tbl_usuarios 
@@ -98,11 +98,11 @@ def cadastro_usuario():
         
         
         conexao.commit()
-        print('\nUsuário cadastrado com sucesso!\n')
+        print('\nUsuário cadastrado com sucesso!✔️\n')
         
 
     except mysql.connector.Error as err:
-        print(f'Erro ao cadastrar o usuario {err}')
+        print(f'Erro ao cadastrar o usuario ❌ {err}')
         conexao.rollback()
     
     finally:
@@ -208,8 +208,8 @@ def agendamento_usuario(usuario_id):
         cursor.execute('UPDATE tbl_usuarios SET dificuldade_id = %s WHERE id_usuario = %s',(dificuldade_id, usuario_id))
 
         conexao.commit()
-        print(f'\nAula de {estilo_escolhido} agendada para o {dia} às {horario}')
-        print(f'\nCaso tenha interesse em outro estilo de dança ou em fazer mais aulas, faça outro agendamento!. Tenha um ótimo dia e obrigado pela preferência\n')
+        print(f'\nAula de {estilo_escolhido} agendada para o {dia} às {horario} 😄\n')
+        print(f'\nCaso tenha interesse em outro estilo de dança ou em fazer mais aulas, faça outro agendamento!. Tenha um ótimo dia e obrigado pela preferência 😃\n')
     
     except mysql.connector.Error as err:
       print(f'Erro no agendamento{err}')
@@ -250,7 +250,7 @@ def listar_cadastro():
 
 
     except mysql.connector.Error as err:
-        print(f'Erro no agendamento{err}')
+        print(f'Erro no agendamento ❌{err}')
         conexao.rollback()
     
     finally:
@@ -276,7 +276,7 @@ def atualizar_cadastro():
         usuario = cursor.fetchone()
 
         if not usuario:
-            print('Usuário não encontrado!')
+            print('Usuário não encontrado!❌')
             return
 
         print('\nDados Atuais')
@@ -330,7 +330,7 @@ def excluir_cadastro():
     confirmacao = input('Deseja realmente deletar este usuario? se sim digite:(s) se não digit (n) >> ').lower().strip()
     
     if confirmacao != 's':
-        print('Deleção cancelada')
+        print('Deleção cancelada✔️')
         return
     
 
@@ -370,9 +370,9 @@ def menu_adm():
     
     while True:
         
-        print('\n1 - Listar cadastros')
-        print('2 - atualizar cadastros')
-        print('3 - excluir cadastros')
+        print('\n1 - Listar cadastros 📃 ')
+        print('2 - atualizar cadastros ♻️ ')
+        print('3 - excluir cadastros 🗑️ ')
         print('4 - Sair e voltar para o menu principal')
         opcao = int(input('Digite o número do que deseja fazer >> '))
 
@@ -410,7 +410,7 @@ def login_usuario():
         if resultado:
             usuario_id, senha_hash = resultado
             if bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
-                print('Login bem sucedido!')
+                print('Login bem sucedido!✔️\n')
                 if username == 'admin':
                     menu_adm()
             
@@ -436,5 +436,4 @@ def login_usuario():
 
 
 if __name__ == '__main__':
-    print('Erro utilize o main.py para executar o código')
-
+    print('Erro utilize o main.py para executar o código!')
