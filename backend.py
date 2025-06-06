@@ -53,8 +53,12 @@ def cadastro_usuario():
             break
         print('Digite algo, o nome não pode ser vazio')
 
+    while True:
+        telefone = input('Digite seu telefone >>').strip()
 
-    telefone = input('Digite seu telefone >>').strip()
+        if len(telefone) == 11:
+            break
+        print('Seu telefone precisa dos 11 digitos, não insira espaços ou o -')
 
     email = input('Digite seu email >>').strip()
 
@@ -411,7 +415,7 @@ def login_usuario():
             usuario_id, senha_hash = resultado
             if bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
                 print('Login bem sucedido!✔️\n')
-                if username == 'admin':
+                if username == 'admin': 
                     menu_adm()
             
                 else:
