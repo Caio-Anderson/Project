@@ -2,6 +2,8 @@ import mysql.connector
 from mysql.connector import Error
 from settings import conectar_banco
 
+import re
+from rich import print
 from tabulate import tabulate
 import bcrypt
 from datetime import datetime, date, time
@@ -27,47 +29,67 @@ def menu():
         print('\n1 - login 🔒')
         print('2 - cadastro 🖋️')
         print('3 - Sair 👋')
-        opcao = int(input('Digite a opção >> '))
 
-        if opcao == 1:
-            login_usuario()
+        try:
+            opcao = int(input('Digite a opção >> '))
+            
+            if opcao == 1:
+                login_usuario()
 
-        elif opcao == 2:
-            cadastro_usuario()
+            elif opcao == 2:
+                cadastro_usuario()
 
-        elif opcao == 3:
-            print('Saindo...')
-            break
-        else:
-         print('Opção inválida ❌')
-         
+            elif opcao == 3:
+                print('Saindo...')
+                break
+            else:
+                print('Opção inválida ❌')
+        
+        except ValueError:
+            print('Digite apenas números!')
 
-
+    
 def cadastro_usuario():
     print('\n<<<<<< Cadastro do Usuário >>>>>>\n')
 
     while True:
-        nome = input('Digite Seu nome >>').strip()
+
+            nome = str(input('Digite Seu nome >>')).strip()
     
-        if nome:
-            break
-        print('Digite algo, o nome não pode ser vazio')
+            if not re.fullmatch(r'^[A-Za-zÀ-ÿ\s]+$', nome):
+                print('Digite apenas caracteres!, não insira números, e também não deixe vazio!')
+            
+            elif re.fullmatch(r'^[A-Za-zÀ-ÿ\s]+$', nome):
+                break
+            
 
     while True:
+
         telefone = input('Digite seu telefone >>').strip()
 
-        if len(telefone) == 11:
+        if len(telefone) == 11 and telefone.isdigit():
             break
         print('Seu telefone precisa dos 11 digitos, não insira espaços ou o -')
 
-    email = input('Digite seu email >>').strip()
+    while True:
+        
+        email = input('Digite seu email >>').strip()
+
+        if re.fullmatch(r'^[\w\.-]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$', email):
+            break
+        
+        else:
+            print('Email inválido! ou erro de digitação, digite novamente')
+
+
 
     while True:
+        
         username = input('Digite o seu nome de usuário >>').strip().lower()
 
         if len(username) >= 5:
             break
-        print('Seu nome de usuário tem que ter ao menos 5 caracteres')
+        print('Seu nome de usuário tem que ter ao menos 5 caracteres!')
 
 
     while True:
@@ -76,7 +98,7 @@ def cadastro_usuario():
         if len(senha) >=4:
             senha_usuario_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
             break
-        print('Sua senha deve ter ao menos 4 caracteres')
+        print('Sua senha deve ter ao menos 4 caracteres!')
 
 
 
