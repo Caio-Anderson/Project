@@ -31,6 +31,7 @@ def menu():
         print('3 - Sair 👋')
 
         try:
+
             opcao = int(input('Digite a opção >> '))
             
             if opcao == 1:
@@ -136,7 +137,7 @@ def cadastro_usuario():
             cursor.close()
         if conexao and conexao.is_connected():
             conexao.close()
-     # Garante que a conexão será fechada mesmo se houver erro   
+      
 
 def agendamento_usuario(usuario_id):
 
@@ -145,7 +146,9 @@ def agendamento_usuario(usuario_id):
     print('\nEscolha a seguir o dia, horário, estilo de dança e seu grau de experiência com o estilo')
 
     while True:
+
         dia = input('Digite o dia desejado (YYYY-MM-DD) >> ') 
+        
         try:
             data_aula = datetime.strptime(dia, '%Y-%m-%d').date()
 
@@ -164,25 +167,26 @@ def agendamento_usuario(usuario_id):
                 break
             else:
                 print('Data inválida ou já passou. Digite uma data futura e Use YYYY-MM-DD')
+        
         except ValueError:
             print('Formato inválido. Use YYYY-MM-DD(ex 2025-05-24.)')
 
     
 
-
-
     while True:
+
         horario = input('Digite o horário desejado (no formato (HH:MM)): ')
+
         try:
             hora_aula = datetime.strptime(horario, "%H:%M").time()
             hora_inicio = time(8,0)
             hora_fim = time(17,0)
             
             if hora_inicio <=hora_aula <=hora_fim:
-               
-               break
+                break
             else:
                 print('Horario invalido. Escolha entre 08:00 e 17:00.')
+        
         except:
             print('Formato invalido. Use HH:MM (ex:10:40).')
 
@@ -391,15 +395,18 @@ def excluir_cadastro():
 
 
 def menu_adm():
-
-    print('Olá seja bem vindo admin!👑, O que deseja fazer hoje?')
     
-    while True:
-        
+  while True:  
+    try:
+       
+        print('Olá seja bem vindo admin!👑, O que deseja fazer hoje?')
         print('\n1 - Listar cadastros 📃 ')
         print('2 - atualizar cadastros ♻️ ')
         print('3 - excluir cadastros 🗑️ ')
         print('4 - Sair e voltar para o menu principal')
+
+    
+       
         opcao = int(input('Digite o número do que deseja fazer >> '))
 
         if opcao == 1:
@@ -412,12 +419,16 @@ def menu_adm():
             excluir_cadastro()
 
         elif opcao == 4:
-            return #faz com que eu volte para o menu sem precisar executa-lo novamente
+            return
             
         else:
             print('Opção inválida')
-
-
+    
+    except ValueError:
+        print('Digite apenas números!\n')
+    
+    except IndexError:
+        print('Digite apenas números!\n')
 
 
 def login_usuario():
@@ -425,9 +436,22 @@ def login_usuario():
     try: 
         conexao = conectar_banco()
         cursor = conexao.cursor()
+    
+        while True:
+            
+                username = input('Digite seu nome de usuário >>').lower().strip()
 
-        username = input('Digite seu nome de usuário >>').lower().strip()
-        senha = input('Digite sua senha >>').strip()
+                if username:
+                    break
+                print('Não pode ser vazio!')
+
+        while True:
+
+            senha = input('Digite sua senha >>').strip()
+        
+            if senha:
+                break
+            print('Não pode ser vazio!')
 
         cursor.execute('SELECT id_usuario, senha FROM tbl_usuarios WHERE username = %s', (username,))
         resultado = cursor.fetchone()
