@@ -263,7 +263,7 @@ def listar_cadastro():
         cursor = conexao.cursor(dictionary=True)
         cursor.execute ('''SELECT id_usuario as "ID", nome_usuario as "Nome",
                         email_usuario as "E-mail",telefone_usuario as "Telefone",
-                        DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i') as "Cadastrado em" FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
+                        DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i') as "Cadastrado em", DATE_FORMAT(atualizado_em, '%d/%m/%Y %H:%i') as 'Atualizado em' FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
         resultados = cursor.fetchall()
 
         if resultados:
@@ -280,7 +280,7 @@ def listar_cadastro():
 
 
     except mysql.connector.Error as err:
-        print(f'Erro no agendamento ❌{err}')
+        print(f'Erro❌{err}')
         conexao.rollback()
     
     finally:
@@ -340,10 +340,10 @@ def atualizar_cadastro():
         
         conexao.commit()
         print('\nDados atualizados com sucesso!')
-                                                                                      
-        
+
+    
     except mysql.connector.Error as err:
-        print(f'Erro no agendamento{err}')
+        print(f'Erro na atualização{err}')
         conexao.rollback()
     
     finally:
@@ -354,13 +354,24 @@ def atualizar_cadastro():
 def excluir_cadastro():
     listar_cadastro()
 
-    
-    usuario_id = int(input('Digite o id do usuario que gostaria de deletar >> '))
+    while True:
+        try:
+            usuario_id = int(input('Digite o id do usuario que gostaria de deletar >> '))
 
-    confirmacao = input('Deseja realmente deletar este usuario? se sim digite:(s) se não digit (n) >> ').lower().strip()
+            if usuario_id:
+                break
+
+        except ValueError:
+            print('\nDigite apenas números!\n')
+
+        except IndexError:
+            print('\nnDigite apenas números!\n')
     
-    if confirmacao != 's':
-        print('Deleção cancelada✔️')
+    
+    confirmacao = input('Deseja realmente deletar este usuario? se sim digite:(sim) se não digit (não) >> ').lower().strip()
+    
+    if confirmacao == 'não':
+        print('Deleção cancelada ✔️')
         return
     
 
@@ -383,7 +394,7 @@ def excluir_cadastro():
 
          
     except mysql.connector.Error as err:
-        print(f'Erro no agendamento{err}')
+        print(f'Erro na deleção{err}')
         conexao.rollback()
     
     finally:
@@ -391,6 +402,105 @@ def excluir_cadastro():
             conexao.close()
 
 
+def adicionar_professor():
+
+    listar_cadastro()
+
+    while True:
+        try:
+
+            professor_id = int(input('Digite o ID do usuário que ira ser professor >> '))
+            
+            if professor_id:
+                break
+
+        except ValueError:
+            print('Digite apenas números!')
+
+        except IndexError:
+            print('Digite apenas números!')
+
+    while True:
+        try:
+
+            especialidade = int(input('Digite a especialidade dele(1 - BLACK CHARME, 2 - HIP HOP, 3 - AFRO BEAT)>> '))
+            
+            if especialidade:
+                break
+
+        except ValueError:
+            print('Digite apenas números!')
+
+        except IndexError:
+            print('Digite apenas números!')
+
+
+    
+    
+    conexao = conectar_banco()
+
+    try:
+
+            cursor = conexao.cursor(dictionary=True)
+
+
+            cursor.execute('''SELECT nome_usuario, email_usuario, telefone_usuario FROM tbl_usuarios WHERE id_usuario = %s ''',(professor_id,))
+            professor = cursor.fetchone()
+
+            if not professor:
+             print('Usuário não encontrado!')
+             return
+    
+        
+            cursor.execute(''' DELETE FROM tbl_usuarios WHERE id_usuario = %s''',(professor_id,))
+
+            cursor.execute('''INSERT INTO tbl_professores (nome_professor,telefone_professor,email_professor,professor_estilo) VALUES (%s, %s, %s, %s)''', 
+                        (professor['nome_usuario'], professor['telefone_usuario'], professor['email_usuario'], especialidade))
+        
+            conexao.commit()
+            print(f'\nProfessor {professor['nome_usuario']} adicionado com sucesso!\n')
+    
+    
+    except mysql.connector.Error as err:
+        print(f'Erro{err}')
+        conexao.rollback()
+    
+    finally:
+            cursor.close()
+            conexao.close()
+
+
+def listar_professor():
+
+    conexao = conectar_banco()
+
+    try:
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute ('''SELECT id_professor as "ID", nome_professor as "Professor",
+                        email_professor as "E-mail",telefone_professor as "Telefone"
+                        FROM tbl_professores''')
+        resultados = cursor.fetchall()
+
+        if resultados:
+            print('\n' + '='*60)
+            print('📝LISTA DE CADASTROS'.center(60))
+            print('='*60)
+
+            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+            print(f'\nTotal de Cadastros: {len(resultados)}')
+
+        else:
+         print('Nenhum cadastro registrado ou encontrado')
+
+
+
+    except mysql.connector.Error as err:
+        print(f'Erro❌ {err}')
+        conexao.rollback()
+    
+    finally:
+            cursor.close()
+            conexao.close()
 
 
 
@@ -403,7 +513,9 @@ def menu_adm():
         print('\n1 - Listar cadastros 📃 ')
         print('2 - atualizar cadastros ♻️ ')
         print('3 - excluir cadastros 🗑️ ')
-        print('4 - Sair e voltar para o menu principal')
+        print('4 - Adicionar professores 💼')
+        print('5 - Listar professores 📃')
+        print('6 - Sair e voltar para o menu principal')
 
     
        
@@ -419,6 +531,12 @@ def menu_adm():
             excluir_cadastro()
 
         elif opcao == 4:
+            adicionar_professor()
+
+        elif opcao == 5:
+            listar_professor()
+        
+        elif opcao == 6:
             return
             
         else:
@@ -477,9 +595,6 @@ def login_usuario():
         conexao.rollback()
 
  
-        
-
-    
         cursor.close()
         conexao.close()
 
