@@ -3,13 +3,29 @@ from mysql.connector import Error
 from settings import conectar_banco
 
 import re
+import bcrypt
+import os
+import sys
+import time as tm
 from rich import print
 from tabulate import tabulate
-import bcrypt
 from datetime import datetime, date, time
 
+
+def limpar_tela ():
+
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+    sys.stdout.flush()
+
+    tm.sleep(0.1)
+
 def menu():
+
+
     while True:
+
+        limpar_tela()
 
         logo = '''
 
@@ -41,6 +57,7 @@ def menu():
                 cadastro_usuario()
 
             elif opcao == 3:
+                limpar_tela()
                 print('Saindo...')
                 break
             else:
@@ -51,6 +68,9 @@ def menu():
 
     
 def cadastro_usuario():
+
+    limpar_tela()
+
     print('\n<<<<<< Cadastro do Usuário >>>>>>\n')
 
     while True:
@@ -140,6 +160,8 @@ def cadastro_usuario():
       
 
 def agendamento_usuario(usuario_id):
+
+    limpar_tela()
 
 
     print('\n<<<<<<<Seja bem-vindo ao agendamento da escola Jabari>>>>>>\n')
@@ -254,6 +276,8 @@ def agendamento_usuario(usuario_id):
 
 
 def listar_cadastro():
+
+    limpar_tela()
     
     conexao = conectar_banco()
     if not conexao:
@@ -291,9 +315,24 @@ def listar_cadastro():
 
 
 def atualizar_cadastro():
+
+    limpar_tela()
     listar_cadastro()
     
-    usuario_id = int(input('Digite o ID do usuário que deseja atualizar os dados >> '))
+    while True:
+        try: 
+            
+            usuario_id = input('Digite o ID do usuário que deseja atualizar os dados caso deseje voltar, digite (voltar) >> ')
+
+            if usuario_id == 'voltar':
+                return
+
+            elif usuario_id and usuario_id.isdigit():
+                break
+
+        except (ValueError, IndexError):
+            print('Digite apenas números!')
+            
 
     conexao  = conectar_banco()
     if not conexao:
@@ -352,6 +391,9 @@ def atualizar_cadastro():
 
 
 def excluir_cadastro():
+    
+    limpar_tela()
+
     listar_cadastro()
 
     while True:
@@ -403,15 +445,19 @@ def excluir_cadastro():
 
 
 def adicionar_professor():
-
+   
+    limpar_tela()
     listar_cadastro()
 
     while True:
         try:
 
-            professor_id = int(input('Digite o ID do usuário que ira ser professor >> '))
+            professor_id = (input('Digite o ID do usuário que ira ser professor (caso queira voltar digite (voltar))>> '))
             
-            if professor_id:
+            if professor_id == 'voltar':
+                return
+
+            elif professor_id and professor_id.isdigit():
                 break
 
         except ValueError:
@@ -471,7 +517,8 @@ def adicionar_professor():
 
 
 def listar_professor():
-
+    
+    limpar_tela()
     conexao = conectar_banco()
 
     try:
@@ -505,8 +552,13 @@ def listar_professor():
 
 
 def menu_adm():
-    
+  
+  
+
   while True:  
+
+    limpar_tela()
+
     try:
        
         print('Olá seja bem vindo admin!👑, O que deseja fazer hoje?')
@@ -522,34 +574,57 @@ def menu_adm():
         opcao = int(input('Digite o número do que deseja fazer >> '))
 
         if opcao == 1:
+            limpar_tela()
             listar_cadastro()
-
+            input('\nPressione Enter para voltar...')
+            
         elif opcao == 2:
+            limpar_tela()
             atualizar_cadastro()
 
         elif opcao == 3:
+            limpar_tela()
             excluir_cadastro()
 
         elif opcao == 4:
+            limpar_tela()
             adicionar_professor()
 
         elif opcao == 5:
+            limpar_tela()
             listar_professor()
+            input('\nPressione Enter para voltar...')
+            
         
         elif opcao == 6:
+            limpar_tela()
             return
             
         else:
             print('Opção inválida')
+            input('Pressione Enter para tentar denovo...')
     
-    except ValueError:
-        print('Digite apenas números!\n')
+    except (ValueError,IndexError):
+        print('Digite apenas números!')
+        
     
-    except IndexError:
-        print('Digite apenas números!\n')
-
 
 def login_usuario():
+
+    limpar_tela()
+
+    logo = '''
+
+     ██╗ █████╗ ██████╗  █████╗ ██████╗ ██╗
+     ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗██║
+     ██║███████║██████╔╝███████║██████╔╝██║
+██   ██║██╔══██║██╔══██╗██╔══██║██╔══██╗██║
+╚█████╔╝██║  ██║██████╔╝██║  ██║██║  ██║██║
+ ╚════╝ ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝
+                                           
+'''
+
+    print(logo)
 
     try: 
         conexao = conectar_banco()
