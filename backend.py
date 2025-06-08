@@ -18,7 +18,7 @@ def limpar_tela ():
 
     sys.stdout.flush()
 
-    tm.sleep(0.1)
+    tm.sleep(0.2)
 
 def menu():
 
@@ -150,6 +150,7 @@ def cadastro_usuario():
 
     except mysql.connector.Error as err:
         print(f'Erro ao cadastrar o usuario ❌ {err}')
+        input('\nPressione Enter para continuar...')
         conexao.rollback()
     
     finally:
@@ -265,6 +266,7 @@ def agendamento_usuario(usuario_id):
     
     except mysql.connector.Error as err:
       print(f'Erro no agendamento{err}')
+      input('\nPressione Enter para continuar...')
       conexao.rollback()
     
     finally:
@@ -275,13 +277,13 @@ def agendamento_usuario(usuario_id):
 
 
 
-def listar_cadastro():
+def listar_usuario():
 
     limpar_tela()
     
     conexao = conectar_banco()
     if not conexao:
-        return #volta pro menu de adm
+        return 
 
     try:
         cursor = conexao.cursor(dictionary=True)
@@ -305,6 +307,7 @@ def listar_cadastro():
 
     except mysql.connector.Error as err:
         print(f'Erro❌{err}')
+        input('\nPressione Enter para continuar...')
         conexao.rollback()
     
     finally:
@@ -312,12 +315,45 @@ def listar_cadastro():
             conexao.close()
 
 
+def listar_professor():
+    
+    limpar_tela()
+    conexao = conectar_banco()
+
+    try:
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute ('''SELECT id_professor as "ID", nome_professor as "Professor",
+                        email_professor as "E-mail",telefone_professor as "Telefone"
+                        FROM tbl_professores''')
+        resultados = cursor.fetchall()
+
+        if resultados:
+            print('\n' + '='*60)
+            print('📝LISTA DE CADASTROS'.center(60))
+            print('='*60)
+
+            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+            print(f'\nTotal de Cadastros: {len(resultados)}')
+
+        else:
+         print('Nenhum cadastro registrado ou encontrado')
 
 
-def atualizar_cadastro():
+
+    except mysql.connector.Error as err:
+        print(f'Erro❌ {err}')
+        input('\nPressione Enter para continuar...')
+        conexao.rollback()
+    
+    finally:
+            cursor.close()
+            conexao.close()
+
+
+def atualizar_cadastro_aluno():
 
     limpar_tela()
-    listar_cadastro()
+    listar_usuario()
     
     while True:
         try: 
@@ -360,6 +396,7 @@ def atualizar_cadastro():
 
 
         campo_escolhido = input('\nDigite o número do campo que deseja atualizar >>  ')
+        
 
         if not campo_escolhido in campos:
             print('Campo inexistente ou erro de digitação')
@@ -390,24 +427,134 @@ def atualizar_cadastro():
             conexao.close()
 
 
-def excluir_cadastro():
-    
-    limpar_tela()
+def atualizar_cadastro_professor():
 
-    listar_cadastro()
+
+    
+    listar_professor()
+    
+    while True:
+        
+        try: 
+            
+            professor_id = input('Digite o ID do usuário que deseja atualizar os dados caso deseje voltar, digite (voltar) >> ')
+
+            if professor_id == 'voltar':
+                return
+
+            elif professor_id and professor_id.isdigit():
+                break
+
+        except (ValueError, IndexError):
+            print('Digite apenas números!')
+            
+
+    conexao  = conectar_banco()
+    
+    if not conexao:
+        return
+    
+    try:
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute('''SELECT tbl_professores.id_professor, tbl_professores.nome_professor, 
+                       tbl_professores.telefone_professor, tbl_professores.email_professor FROM tbl_professores WHERE id_professor = %s''', (professor_id,))
+        professor = cursor.fetchone()
+
+        if not professor:
+            print('professor não encontrado!❌')
+            return
+
+        print('\nDados Atuais')
+        print(tabulate([professor], headers='keys', tablefmt= 'fancy_grid'))
+    
+        print('\nCampos disponivéis para alteração: ')
+
+        campos = {'1': ('nome_professor', 'nome'), '2': ('email_professor', 'email'), '3': ('telefone_professor', 'Telefone')} #dicionario para armazenar meus campos de alteração
+    
+        for key, (coluna_transformacao, transformacao) in campos.items(): #a key é o número que eu atribui dentro da variavel campos
+            print(f'{key} - {transformacao}')  #o número 1 é para ele pegar dentro do dicionario, o texto para exibir para o usuario se fosse 0 mostraria o campo do banco de dados
+
+
+        campo_escolhido = input('\nDigite o número do campo que deseja atualizar >>  ')
+
+        if not campo_escolhido in campos:
+            print('Campo inexistente ou erro de digitação')
+            return
+
+        transformacao = campos[campo_escolhido][1] #olha o dicionario e procura o nome do campo que esta dentro do mysql
+        atualizacao = input(f'Digite o novo {transformacao} >> ') #faz com que a função campos receba o número no campo escolhido e busque no dicionario o nome do campo
+
+
+        coluna_transformacao = campos[campo_escolhido][0]
+
+        if coluna_transformacao not in ('nome_professor', 'email_professor', 'telefone_professor'):
+            raise ValueError('Tentativa negada')
+        
+        comando = "UPDATE tbl_professores   SET  `{}` = %s WHERE id_professor = %s".format(coluna_transformacao)    
+        cursor.execute(comando, (atualizacao, professor_id))
+        
+        conexao.commit()
+        print('\nDados atualizados com sucesso!')
+
+    
+    except mysql.connector.Error as err:
+        print(f'Erro na atualização{err}')
+        conexao.rollback()
+    
+    finally:
+            cursor.close()
+            conexao.close()
+
+
+def atualizar_cadastro():
+
+    
+    while True:
+     
+     limpar_tela()
+     
+     try:
+
+        opcao = int(input('Digite o número de quem você gostaria de atualizar (1 - alunos ou 2 - professores e para voltar digite 3) >> '))
+
+        if opcao == 1:
+            atualizar_cadastro_aluno()
+
+        elif opcao == 2:
+            atualizar_cadastro_professor()
+
+        elif opcao == 3:
+            return
+        
+        else:
+            print('Opção inválida!')
+            input('\nAperte enter para tentar denovo.....')
+
+
+     except (ValueError, IndexError):
+        print('Digite apenas números')
+        input('\nAperte enter para tentar denovo.....')
+
+
+
+def excluir_cadastro_aluno():
+
+    listar_usuario()
 
     while True:
+
         try:
             usuario_id = int(input('Digite o id do usuario que gostaria de deletar >> '))
 
             if usuario_id:
                 break
 
-        except ValueError:
+        except (ValueError, IndexError):
             print('\nDigite apenas números!\n')
+            input('\nAperte enter para tentar denovo....')
 
-        except IndexError:
-            print('\nnDigite apenas números!\n')
+        
     
     
     confirmacao = input('Deseja realmente deletar este usuario? se sim digite:(sim) se não digit (não) >> ').lower().strip()
@@ -437,6 +584,7 @@ def excluir_cadastro():
          
     except mysql.connector.Error as err:
         print(f'Erro na deleção{err}')
+        input('\nPressione Enter para continuar...')
         conexao.rollback()
     
     finally:
@@ -444,10 +592,97 @@ def excluir_cadastro():
             conexao.close()
 
 
+
+def excluir_cadastro_professor():
+
+    listar_professor()
+    while True:
+
+        try:
+            professor_id = int(input('Digite o id do usuario que gostaria de deletar >> '))
+
+            if professor_id:
+                break
+
+        except (ValueError, IndexError):
+            print('\nDigite apenas números!\n')
+            input('\nAperte enter para tentar denovo....')
+
+        
+    
+    
+    confirmacao = input('Deseja realmente deletar este usuario? se sim digite:(sim) se não digit (não) >> ').lower().strip()
+    
+    if confirmacao == 'não':
+        print('Deleção cancelada ✔️')
+        return
+    
+
+    conexao = conectar_banco()
+    if not conexao:
+        return
+    
+    try:
+        
+        cursor = conexao.cursor()
+        cursor.execute('DELETE FROM tbl_professores WHERE id_professor = %s',(professor_id,))
+
+        if cursor.rowcount >0:
+            conexao.commit()
+            print('\nProfessor deletado com sucesso')
+        
+        else:
+            print('Nenhum professor deletado, ou id não foi encotrado')
+    
+
+         
+    except mysql.connector.Error as err:
+        print(f'Erro na deleção{err}')
+        input('\nPressione Enter para continuar...')
+        conexao.rollback()
+    
+    finally:
+            cursor.close()
+            conexao.close()
+
+
+
+def excluir_cadastro():
+    
+    limpar_tela()
+
+    while True:
+       
+        try:
+            
+            opcao = int(input('Digite quem você deseja excluir (1 - aluno, 2 - professor ou 3 - voltar)>> '))
+
+            if opcao == 1:
+                excluir_cadastro_aluno()
+
+
+            elif opcao == 2:
+                excluir_cadastro_professor()
+            
+            elif opcao ==3:
+                return
+
+            else:
+                print('Opção invalida!')
+                input('\nAperte enter para tentar denovo....')
+        
+        
+        except (ValueError, IndexError):
+            print('\nDigite apenas números!')
+            input('\nAperte enter para tentar denovo....')
+    
+
+
+
 def adicionar_professor():
    
     limpar_tela()
-    listar_cadastro()
+    listar_usuario()
 
     while True:
         try:
@@ -467,6 +702,7 @@ def adicionar_professor():
             print('Digite apenas números!')
 
     while True:
+        
         try:
 
             especialidade = int(input('Digite a especialidade dele(1 - BLACK CHARME, 2 - HIP HOP, 3 - AFRO BEAT)>> '))
@@ -481,7 +717,6 @@ def adicionar_professor():
             print('Digite apenas números!')
 
 
-    
     
     conexao = conectar_banco()
 
@@ -509,53 +744,20 @@ def adicionar_professor():
     
     except mysql.connector.Error as err:
         print(f'Erro{err}')
+        input('\nPressione Enter para continuar...')
         conexao.rollback()
     
     finally:
             cursor.close()
             conexao.close()
 
-
-def listar_professor():
-    
-    limpar_tela()
-    conexao = conectar_banco()
-
-    try:
-        cursor = conexao.cursor(dictionary=True)
-        cursor.execute ('''SELECT id_professor as "ID", nome_professor as "Professor",
-                        email_professor as "E-mail",telefone_professor as "Telefone"
-                        FROM tbl_professores''')
-        resultados = cursor.fetchall()
-
-        if resultados:
-            print('\n' + '='*60)
-            print('📝LISTA DE CADASTROS'.center(60))
-            print('='*60)
-
-            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
-            print(f'\nTotal de Cadastros: {len(resultados)}')
-
-        else:
-         print('Nenhum cadastro registrado ou encontrado')
-
-
-
-    except mysql.connector.Error as err:
-        print(f'Erro❌ {err}')
-        conexao.rollback()
-    
-    finally:
-            cursor.close()
-            conexao.close()
 
 
 
 def menu_adm():
   
   
-
-  while True:  
+ while True:  
 
     limpar_tela()
 
@@ -575,7 +777,7 @@ def menu_adm():
 
         if opcao == 1:
             limpar_tela()
-            listar_cadastro()
+            listar_usuario()
             input('\nPressione Enter para voltar...')
             
         elif opcao == 2:
