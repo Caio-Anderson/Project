@@ -132,7 +132,7 @@ def cadastro_usuario():
         
         if cursor.fetchone():
             print('Username ou e-mail já cadastrado! ❌')
-            return # Sai da função se já existir
+            return 
         
         comando = '''INSERT INTO tbl_usuarios 
                      (nome_usuario,email_usuario, telefone_usuario, username, senha) 
@@ -166,7 +166,7 @@ def agendamento_usuario(usuario_id):
 
 
     print('\n<<<<<<<Seja bem-vindo ao agendamento da escola Jabari>>>>>>\n')
-    print('\nEscolha a seguir o dia, horário, estilo de dança e seu grau de experiência com o estilo')
+    print('\nEscolha a seguir o dia, horário, estilo de dança, seu grau de experiência com o estilo e o professor!')
 
     while True:
 
@@ -242,6 +242,60 @@ def agendamento_usuario(usuario_id):
             print('Por favor selecione um dos niveis presentes na lista')
     
 
+    while True:
+        
+
+        try:
+            conexao = conectar_banco()
+            cursor = conexao.cursor(dictionary=True)
+
+            cursor.execute('''SELECT tbl_professores.id_professor as 'ID', tbl_professores.nome_professor as 'Professor', tbl_estilos.nome_estilo as 'Estilo' 
+                           FROM tbl_professores JOIN tbl_estilos ON tbl_professores.professor_estilo = tbl_estilos.id_estilo WHERE tbl_professores.professor_estilo = %s
+                           ''',(estilo_escolhido,))
+            resultados = cursor.fetchall()
+
+            if not resultados:
+                print('Nenhum cadastro registrado ou encontrado')
+                input('Aperte enter para voltar....')
+                return
+
+            if resultados:
+             print('\n' + '='*60)
+             print('📝LISTA DE PROFESSORES'.center(60))
+             print('='*60)
+
+             print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+             print(f'\nTotal de Cadastros: {len(resultados)}')
+
+            
+            ids_validos = [str(prof['ID']) for prof in resultados]
+
+            while True:
+                try:
+                     professor_id = input('Digite o número do ID do professor que deseja fazer a aula (caso deseje desistir do agendamento digite 0) >> ')
+                
+                     if professor_id == '0':
+                        return
+                
+                     if professor_id not in ids_validos:
+                        print('ID errado! selecione um da lista')
+                        continue
+                
+                     break
+
+                except (ValueError, IndexError):
+                    print('Insira apenas números!')   
+            
+            professor_id = int(professor_id)
+            break   
+
+        except mysql.connector.Error as err:
+            print(f'Erro ao procurar{err}')
+            input('\nPressione Enter para continuar...')
+
+        
+
+
     try:
         conexao = conectar_banco()
         cursor = conexao.cursor()
@@ -253,9 +307,12 @@ def agendamento_usuario(usuario_id):
             print('\nDia e hórario já cadastrado!, Se deseja agendar outra aula neste mesmo dia escolha outro horário\n')
             return
        
- 
+
+        cursor.execute('''SELECT COUNT(*) FROM tbl_agendamentos WHERE professor_id = %s AND dia = %s AND horario = %s''', (professor_id, dia, horario))
+        agendamentos_existente = cursor.fetchone()[0]
+        aula_coletiva = agendamentos_existente > 0
        
-        cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento) VALUES (%s,%s,%s, %s)''',(dia, horario, usuario_id, estilo_escolhido))
+        cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento,professor_id,aula_coletiva) VALUES (%s,%s,%s, %s,%s,%s)''',(dia, horario, usuario_id, estilo_escolhido,professor_id,aula_coletiva))
        
 
         cursor.execute('UPDATE tbl_usuarios SET dificuldade_id = %s WHERE id_usuario = %s',(dificuldade_id, usuario_id))
@@ -263,7 +320,8 @@ def agendamento_usuario(usuario_id):
         conexao.commit()
         print(f'\nAula de {estilo_escolhido} agendada para o {dia} às {horario} 😄\n')
         print(f'\nCaso tenha interesse em outro estilo de dança ou em fazer mais aulas, faça outro agendamento!. Tenha um ótimo dia e obrigado pela preferência 😃\n')
-    
+        input('Digite enter para continuar....')
+
     except mysql.connector.Error as err:
       print(f'Erro no agendamento{err}')
       input('\nPressione Enter para continuar...')
@@ -289,7 +347,7 @@ def listar_usuario():
         cursor = conexao.cursor(dictionary=True)
         cursor.execute ('''SELECT id_usuario as "ID", nome_usuario as "Nome",
                         email_usuario as "E-mail",telefone_usuario as "Telefone",
-                        DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i') as "Cadastrado em", DATE_FORMAT(atualizado_em, '%d/%m/%Y %H:%i') as 'Atualizado em' FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
+                        DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i') as "Cadastrado em", DATE_FORMAT(atualizado_em, '%d/%m/%Y %H:%i') as 'Atualizado em',tipo_usuario as 'tipo' FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
         resultados = cursor.fetchall()
 
         if resultados:
@@ -516,7 +574,7 @@ def atualizar_cadastro():
      
      try:
 
-        opcao = int(input('Digite o número de quem você gostaria de atualizar (1 - alunos ou 2 - professores e para voltar digite 3) >> '))
+        opcao = int(input('Digite o número de quem você gostaria de atualizar (1 - alunos, 2 - professores, 3 - voltar) >> '))
 
         if opcao == 1:
             atualizar_cadastro_aluno()
@@ -733,14 +791,14 @@ def adicionar_professor():
              return
     
         
-            cursor.execute(''' DELETE FROM tbl_usuarios WHERE id_usuario = %s''',(professor_id,))
+            cursor.execute(''' UPDATE tbl_usuarios SET tipo_usuario = 'professor' WHERE id_usuario = %s''',(professor_id,))
 
-            cursor.execute('''INSERT INTO tbl_professores (nome_professor,telefone_professor,email_professor,professor_estilo) VALUES (%s, %s, %s, %s)''', 
-                        (professor['nome_usuario'], professor['telefone_usuario'], professor['email_usuario'], especialidade))
+            cursor.execute('''INSERT INTO tbl_professores (id_usuario_professor,nome_professor,telefone_professor,email_professor,professor_estilo) VALUES (%s,%s, %s, %s, %s)''', 
+                        (professor_id,professor['nome_usuario'], professor['telefone_usuario'], professor['email_usuario'], especialidade))
         
             conexao.commit()
             print(f'\nProfessor {professor['nome_usuario']} adicionado com sucesso!\n')
-    
+            input('Aperte enter para continuar!')
     
     except mysql.connector.Error as err:
         print(f'Erro{err}')
@@ -809,7 +867,44 @@ def menu_adm():
     except (ValueError,IndexError):
         print('Digite apenas números!')
         
+
+def gerenciar_aulas(professor_id):
+
+    limpar_tela()
     
+    try:
+
+        conexao = conectar_banco()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute('''SELECT tbl_agendamentos.dia, tbl_agendamentos.horario FROM tbl_agendamentos WHERE professor_id = %s''',(professor_id,))
+        resultados = cursor.fetchall()
+
+        if resultados:
+            print('\n' + '='*60)
+            print('📝LISTA DE AGENDAMENTOS'.center(60))
+            print('='*60)
+
+            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+            print(f'\nTotal de agendamentos: {len(resultados)}')
+            input('Digite enter para voltar....')
+
+        else:
+         print('Nenhum agendamento registrado ou encontrado')
+         input('Aperte enter para voltar....')
+
+
+
+
+    except mysql.connector.Error as err:
+        print(f'Erro ao selecionar os agendamentos{err}')
+
+
+        cursor.close()
+        conexao.close()
+
+
+
 
 def login_usuario():
 
@@ -830,7 +925,7 @@ def login_usuario():
 
     try: 
         conexao = conectar_banco()
-        cursor = conexao.cursor()
+        cursor = conexao.cursor(dictionary=True)
     
         while True:
             
@@ -848,32 +943,61 @@ def login_usuario():
                 break
             print('Não pode ser vazio!')
 
-        cursor.execute('SELECT id_usuario, senha FROM tbl_usuarios WHERE username = %s', (username,))
-        resultado = cursor.fetchone()
+        cursor.execute('SELECT id_usuario, senha, tipo_usuario FROM tbl_usuarios WHERE username = %s', (username,))
+        usuario = cursor.fetchone()
 
 
-        if resultado:
-            usuario_id, senha_hash = resultado
-            if bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
-                print('Login bem sucedido!✔️\n')
-                if username == 'admin': 
-                    menu_adm()
-            
-                else:
-                    agendamento_usuario(usuario_id,)
-            else:
-                print('Senha incorreta!')
+
+        if not usuario:
+            print('Usuário não encontrado!')    
+            input('Digite enter para voltar')
+            return
+
+        usuario_id = usuario['id_usuario']
+        senha_hash = usuario['senha']
+        tipo = usuario['tipo_usuario']
         
-        else:
-            print('Usuário não encontrado')
+        
+    
+        
+        if not bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
+                print('Senha incorreta!')
+
+    
+
+        if tipo == 'professor':
+            cursor.execute('''SELECT id_professor FROM tbl_professores  WHERE id_usuario_professor = %s''', (usuario_id,))
+            professor = cursor.fetchone()
+    
+            if not professor:
+                print("❌ Cadastro de professor incompleto!")
+                input("Pressione Enter para voltar...")
+                return
+    
+            gerenciar_aulas(professor['id_professor'])
+            
+
+        elif username == 'admin':
+            menu_adm()
+
+        elif tipo == 'aluno':
+            agendamento_usuario(usuario_id) 
+                
+       
+
+    
     
     except mysql.connector.Error as err:
-        print(f'Erro ao cadastrar o usuario {err}')
+        print(f'Erro{err}')
+        input('Aperte enter para continuar....')
         conexao.rollback()
 
  
         cursor.close()
         conexao.close()
+
+    
+
 
 
 
