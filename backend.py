@@ -872,12 +872,16 @@ def gerenciar_aulas(professor_id):
 
     limpar_tela()
     
+
+
     try:
 
         conexao = conectar_banco()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute('''SELECT tbl_agendamentos.dia, tbl_agendamentos.horario FROM tbl_agendamentos WHERE professor_id = %s''',(professor_id,))
+        cursor.execute('''SELECT tbl_agendamentos.id_agendamento AS 'ID',
+                       tbl_agendamentos.dia, tbl_agendamentos.horario, IF (aula_coletiva = 1, 'Sim', 'não')as `aula coletiva` FROM tbl_agendamentos
+                        WHERE professor_id = %s''',(professor_id,))
         resultados = cursor.fetchall()
 
         if resultados:
@@ -887,7 +891,7 @@ def gerenciar_aulas(professor_id):
 
             print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
             print(f'\nTotal de agendamentos: {len(resultados)}')
-            input('Digite enter para voltar....')
+            
 
         else:
          print('Nenhum agendamento registrado ou encontrado')
@@ -896,9 +900,30 @@ def gerenciar_aulas(professor_id):
 
 
 
+        print('Gostaria de ver quais alunos estão presentes na aula?')
+        input('Aperte enter para continuar...')
+        escolha = input('Digite aqui o ID da aula que gostaria de ver os alunos >> ')
+
+        cursor.execute('''SELECT tbl_usuarios.nome_usuario as 'nomes'
+                        FROM tbl_agendamentos JOIN tbl_usuarios ON tbl_agendamentos.usuario_id = tbl_usuarios.id_usuario WHERE id_agendamento = %s ''',(escolha,))
+        resultados = cursor.fetchall()
+
+        if resultados:
+            print('\n' + '='*60)
+            print('📝LISTA DE NOMES'.center(60))
+            print('='*60)
+
+            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+            print(f'\nTotal de alunos agendados: {len(resultados)}')
+            input('a')
+
+        else:
+         print('Nenhum agendamento registrado ou encontrado')
+         input('Aperte enter para voltar....')
+
     except mysql.connector.Error as err:
         print(f'Erro ao selecionar os agendamentos{err}')
-
+        input('Aperte enter para voltar....')
 
         cursor.close()
         conexao.close()
