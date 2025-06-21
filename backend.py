@@ -14,11 +14,17 @@ from datetime import datetime, date, time
 
 def limpar_tela ():
 
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-    sys.stdout.flush()
-
-    tm.sleep(0.2)
+      if os.name == 'nt':
+        os.system('cls')
+       
+        os.system('echo off && cls')
+   
+      else:
+          os.system('printf "\033c\033[3J"')  
+    
+      sys.stdout.flush()
+      tm.sleep(0.2) 
+      print("\n" * 3)
 
 def menu():
 
@@ -356,17 +362,19 @@ def listar_usuario():
         cursor = conexao.cursor(dictionary=True)
         cursor.execute ('''SELECT id_usuario as "ID", nome_usuario as "Nome",
                         email_usuario as "E-mail",telefone_usuario as "Telefone",
-                        DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i') as "Cadastrado em", DATE_FORMAT(atualizado_em, '%d/%m/%Y %H:%i') as 'Atualizado em',tipo_usuario as 'tipo' FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
+                        DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i') as "Cadastrado em", DATE_FORMAT(atualizado_em, '%d/%m/%Y %H:%i') as 
+                        'Atualizado em',tipo_usuario as 'tipo' FROM tbl_usuarios''') #dateformat formata a data para o nosso padrão
         resultados = cursor.fetchall()
 
         if resultados:
-            print('\n' + '='*60)
-            print('📝LISTA DE CADASTROS'.center(60))
-            print('='*60)
+            
+            print('📝LISTA DE CADASTROS'.center(100))
 
-            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+            print(tabulate(resultados, headers='keys', tablefmt= 'simple_grid', stralign = 'center', numalign = 'center', showindex = False))
             print(f'\nTotal de Cadastros: {len(resultados)}')
-
+            input('\nPressione Enter para continuar...')
+            limpar_tela()
+            return
         else:
          print('Nenhum cadastro registrado ou encontrado')
 
@@ -395,11 +403,9 @@ def listar_professor():
         resultados = cursor.fetchall()
 
         if resultados:
-            print('\n' + '='*60)
-            print('📝LISTA DE CADASTROS'.center(60))
-            print('='*60)
-
-            print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
+            
+            print('📝LISTA DE PROFESSORES'.center(60))
+            print(tabulate(resultados, headers='keys', tablefmt= 'simple_grid', stralign = 'center', numalign = 'center', showindex = False))
             print(f'\nTotal de Cadastros: {len(resultados)}')
 
         else:
@@ -818,110 +824,57 @@ def adicionar_professor():
             cursor.close()
             conexao.close()
 
+        
 
-
-
-def menu_adm():
-  
-  
- while True:  
+def visualizar_aula(professor_id):
 
     limpar_tela()
 
-    try:
-       
-        print('Olá seja bem vindo admin!👑, O que deseja fazer hoje?')
-        print('\n1 - Listar cadastros 📃 ')
-        print('2 - atualizar cadastros ♻️ ')
-        print('3 - excluir cadastros 🗑️ ')
-        print('4 - Adicionar professores 💼')
-        print('5 - Listar professores 📃')
-        print('6 - Sair e voltar para o menu principal')
-
-    
-       
-        opcao = int(input('Digite o número do que deseja fazer >> '))
-
-        if opcao == 1:
-            limpar_tela()
-            listar_usuario()
-            input('\nPressione Enter para voltar...')
-            
-        elif opcao == 2:
-            limpar_tela()
-            atualizar_cadastro()
-
-        elif opcao == 3:
-            limpar_tela()
-            excluir_cadastro()
-
-        elif opcao == 4:
-            limpar_tela()
-            adicionar_professor()
-
-        elif opcao == 5:
-            limpar_tela()
-            listar_professor()
-            input('\nPressione Enter para voltar...')
-            
-        
-        elif opcao == 6:
-            limpar_tela()
-            return
-            
-        else:
-            print('Opção inválida')
-            input('Pressione Enter para tentar denovo...')
-    
-    except (ValueError,IndexError):
-        print('Digite apenas números!')
-        
-
-def gerenciar_aulas(professor_id):
-
-    limpar_tela()
-    
-    
     try:
 
         conexao = conectar_banco()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute('''SELECT tbl_agendamentos.dia, tbl_agendamentos.horario, IF (aula_coletiva = 1, 'Sim', 'Não')as `aula coletiva` FROM tbl_agendamentos
+        cursor.execute('''SELECT DATE_FORMAT(dia, '%d/%m/%Y')AS 'Dia', TIME_FORMAT(horario, '%H:%i') as 'Horário', IF (aula_coletiva = 1, 'Sim', 'Não')as `Aula coletiva` FROM tbl_agendamentos
                         WHERE professor_id = %s''',(professor_id,))
         resultados = cursor.fetchall()
 
         if resultados:
-            print('\n' + '='*60)
-            print('📝LISTA DE AGENDAMENTOS'.center(60))
-            print('='*60)
+           
+            print('📝LISTA DE AGENDAMENTOS'.center(45))
+           
 
             print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
             print(f'\nTotal de agendamentos: {len(resultados)}')
+            input('Aperte enter para continuar....')
             
+           
 
         else:
          print('Nenhum agendamento registrado ou encontrado')
          input('Aperte enter para voltar....')
 
+    
+    except mysql.connector.Error as err:
+        print(f'Erro ao selecionar os agendamentos{err}')
+        input('Aperte enter para voltar....')
+
+        cursor.close()
+        conexao.close()
 
 
+def visualizar_aluno(professor_id):
+    
+    limpar_tela()
 
-        print('Gostaria de ver quais alunos estão presentes em alguma aula?')
-        
-        while True:
 
-            escolha = input('Se sim digite (sim), caso contrario digite (não) >> ').lower().strip()
-
-            if escolha == 'não':
-                return
-
-            elif escolha == 'sim':
-                break
+    visualizar_aula(professor_id)
             
-        print('Digite o dia e horario da aula que gostaria de ver!')
-        
-        while True:
+            
+    
+    while True:
+            
+            print('Digite o dia e horario da aula que gostaria de ver!')
 
             dia = input('Digite o dia desejado (YYYY-MM-DD) >> ') 
         
@@ -936,7 +889,7 @@ def gerenciar_aulas(professor_id):
                 print('Formato invalido!, use YYYY-MM-DD por favor')
 
 
-        while True:
+    while True:
 
             horario = input('Digite o horario desejado (HH:MM) >> ') 
         
@@ -952,20 +905,24 @@ def gerenciar_aulas(professor_id):
         
         
         
-        
+    try: 
+        conexao = conectar_banco()
+        cursor = conexao.cursor()   
 
         cursor.execute('''SELECT tbl_usuarios.nome_usuario as 'nomes'
                         FROM tbl_agendamentos JOIN tbl_usuarios ON tbl_agendamentos.usuario_id = tbl_usuarios.id_usuario WHERE dia = %s AND horario = %s ''',(dia, horario))
         resultados = cursor.fetchall()
 
         if resultados:
-            print('\n' + '='*60)
+           
             print('📝LISTA DE NOMES'.center(60))
-            print('='*60)
+            
 
             print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
             print(f'\nTotal de alunos agendados: {len(resultados)}')
             input('Digite enter para continuar.....')
+            limpar_tela()
+            return
             
             
 
@@ -982,11 +939,47 @@ def gerenciar_aulas(professor_id):
 
 
 
+def gerenciar_aulas(professor_id):
+
+    limpar_tela()
+    
+    try:
+            
+        while True:  
+                
+                limpar_tela()            
+
+                print('O que deseja fazer?')
+                print('1 - Visualizar aulas agendadas')
+                print('2 - Visualizar alunos de alguma aula')
+                print('3 - Voltar') 
+                
+                opcao = int(input('Digite aqui o número da opção que deseja >> '))
+
+                if opcao == 1:
+                    visualizar_aula(professor_id)
+                    limpar_tela()
+
+                elif opcao == 2:
+                    visualizar_aluno(professor_id)
+                    limpar_tela()
+
+                elif opcao == 3:
+                    limpar_tela()
+                    return
+
+    except (ValueError, IndexError):
+            print('Insira apenas números!')
+
+    
+
+
+
 def cancelar_aula(professor_id):
 
     limpar_tela()
 
-    gerenciar_aulas(professor_id)
+    visualizar_aula(professor_id)
 
 
     print('Digite o dia e horário da aula que gostaria de cancelar')
@@ -1054,8 +1047,6 @@ def cancelar_aula(professor_id):
 
 
 
-
-
 def menu_professor(professor_id):
 
     limpar_tela()
@@ -1069,7 +1060,7 @@ def menu_professor(professor_id):
                 limpar_tela()
 
                 print(f'Olá professor o que deseja fazer?')
-                print('1 - Visualizar aulas agendadas')
+                print('1 - Gerenciar aulas agendadas')
                 print('2 - Cancelar aula')
                 print('3 - Voltar') 
                 
@@ -1087,6 +1078,63 @@ def menu_professor(professor_id):
     except (ValueError, IndexError):
             print('Insira apenas números!')
 
+
+def menu_adm():
+  
+  
+ while True:  
+
+    limpar_tela()
+
+    try:
+       
+        
+
+        print('Olá seja bem vindo admin!👑, O que deseja fazer hoje?')
+        print('\n1 - Listar cadastros 📃 ')
+        print('2 - atualizar cadastros ♻️ ')
+        print('3 - excluir cadastros 🗑️ ')
+        print('4 - Adicionar professores 💼')
+        print('5 - Listar professores 📃')
+        print('6 - Sair e voltar para o menu principal')
+
+    
+       
+        opcao = int(input('Digite o número do que deseja fazer >> '))
+
+        if opcao == 1:
+            limpar_tela()
+            listar_usuario()
+            
+            
+        elif opcao == 2:
+            limpar_tela()
+            atualizar_cadastro()
+
+        elif opcao == 3:
+            limpar_tela()
+            excluir_cadastro()
+
+        elif opcao == 4:
+            limpar_tela()
+            adicionar_professor()
+
+        elif opcao == 5:
+            limpar_tela()
+            listar_professor()
+            input('\nPressione Enter para voltar...')
+            
+        
+        elif opcao == 6:
+            limpar_tela()
+            return
+            
+        else:
+            print('Opção inválida')
+            input('Pressione Enter para tentar denovo...')
+    
+    except (ValueError,IndexError):
+        print('Digite apenas números!')
 
 
 
