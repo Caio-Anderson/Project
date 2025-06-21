@@ -210,7 +210,7 @@ def agendamento_usuario(usuario_id):
             else:
                 print('Horario invalido. Escolha entre 08:00 e 17:00.')
         
-        except:
+        except ValueError:
             print('Formato invalido. Use HH:MM (ex:10:40).')
 
     
@@ -310,10 +310,19 @@ def agendamento_usuario(usuario_id):
 
         cursor.execute('''SELECT COUNT(*) FROM tbl_agendamentos WHERE professor_id = %s AND dia = %s AND horario = %s''', (professor_id, dia, horario))
         agendamentos_existente = cursor.fetchone()[0]
+        
         aula_coletiva = agendamentos_existente > 0
-       
-        cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento,professor_id,aula_coletiva) VALUES (%s,%s,%s, %s,%s,%s)''',(dia, horario, usuario_id, estilo_escolhido,professor_id,aula_coletiva))
-       
+
+        if not aula_coletiva:
+            
+            cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento,professor_id,aula_coletiva) VALUES (%s,%s,%s, %s,%s,%s)''',(dia, horario, usuario_id, estilo_escolhido,professor_id,aula_coletiva))
+            
+        
+        else:
+            cursor.execute('UPDATE tbl_agendamentos SET aula_coletiva = 1 WHERE aula_coletiva = 0')
+            cursor.execute('''INSERT INTO tbl_agendamentos (dia, horario, usuario_id, estilo_agendamento,professor_id,aula_coletiva) VALUES (%s,%s,%s, %s,%s,%s)''',(dia, horario, usuario_id, estilo_escolhido,professor_id,aula_coletiva))
+            
+            
 
         cursor.execute('UPDATE tbl_usuarios SET dificuldade_id = %s WHERE id_usuario = %s',(dificuldade_id, usuario_id))
 
@@ -872,15 +881,13 @@ def gerenciar_aulas(professor_id):
 
     limpar_tela()
     
-
-
+    
     try:
 
         conexao = conectar_banco()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute('''SELECT tbl_agendamentos.id_agendamento AS 'ID',
-                       tbl_agendamentos.dia, tbl_agendamentos.horario, IF (aula_coletiva = 1, 'Sim', 'não')as `aula coletiva` FROM tbl_agendamentos
+        cursor.execute('''SELECT tbl_agendamentos.dia, tbl_agendamentos.horario, IF (aula_coletiva = 1, 'Sim', 'Não')as `aula coletiva` FROM tbl_agendamentos
                         WHERE professor_id = %s''',(professor_id,))
         resultados = cursor.fetchall()
 
@@ -900,12 +907,55 @@ def gerenciar_aulas(professor_id):
 
 
 
-        print('Gostaria de ver quais alunos estão presentes na aula?')
-        input('Aperte enter para continuar...')
-        escolha = input('Digite aqui o ID da aula que gostaria de ver os alunos >> ')
+        print('Gostaria de ver quais alunos estão presentes em alguma aula?')
+        
+        while True:
+
+            escolha = input('Se sim digite (sim), caso contrario digite (não) >> ').lower().strip()
+
+            if escolha == 'não':
+                return
+
+            elif escolha == 'sim':
+                break
+            
+        print('Digite o dia e horario da aula que gostaria de ver!')
+        
+        while True:
+
+            dia = input('Digite o dia desejado (YYYY-MM-DD) >> ') 
+        
+            try:
+                
+                data_aula = datetime.strptime(dia, '%Y-%m-%d').date()
+                
+                if data_aula:
+                    break
+
+            except ValueError:
+                print('Formato invalido!, use YYYY-MM-DD por favor')
+
+
+        while True:
+
+            horario = input('Digite o horario desejado (HH:MM) >> ') 
+        
+            try:
+                
+                hora_aula = datetime.strptime(horario, "%H:%M").time()
+                
+                if hora_aula:
+                    break
+
+            except ValueError:
+                print('Formato invalido!, use (HH:MM) por favor')
+        
+        
+        
+        
 
         cursor.execute('''SELECT tbl_usuarios.nome_usuario as 'nomes'
-                        FROM tbl_agendamentos JOIN tbl_usuarios ON tbl_agendamentos.usuario_id = tbl_usuarios.id_usuario WHERE id_agendamento = %s ''',(escolha,))
+                        FROM tbl_agendamentos JOIN tbl_usuarios ON tbl_agendamentos.usuario_id = tbl_usuarios.id_usuario WHERE dia = %s AND horario = %s ''',(dia, horario))
         resultados = cursor.fetchall()
 
         if resultados:
@@ -915,7 +965,9 @@ def gerenciar_aulas(professor_id):
 
             print(tabulate(resultados, headers='keys', tablefmt= 'fancy_grid', stralign = 'center', numalign = 'center', showindex = False))
             print(f'\nTotal de alunos agendados: {len(resultados)}')
-            input('a')
+            input('Digite enter para continuar.....')
+            
+            
 
         else:
          print('Nenhum agendamento registrado ou encontrado')
@@ -927,6 +979,113 @@ def gerenciar_aulas(professor_id):
 
         cursor.close()
         conexao.close()
+
+
+
+def cancelar_aula(professor_id):
+
+    limpar_tela()
+
+    gerenciar_aulas(professor_id)
+
+
+    print('Digite o dia e horário da aula que gostaria de cancelar')
+
+    while True:
+
+            dia = input('Digite o dia desejado (YYYY-MM-DD) >> ') 
+        
+            try:
+                
+                data_aula = datetime.strptime(dia, '%Y-%m-%d').date()
+                
+                if data_aula:
+                    break
+
+            except ValueError:
+                print('Formato invalido!, use YYYY-MM-DD por favor')
+
+
+    while True:
+
+            horario = input('Digite o horario desejado (HH:MM) >> ') 
+        
+            try:
+                
+                hora_aula = datetime.strptime(horario, "%H:%M").time()
+                
+                if hora_aula:
+                    break
+
+            except ValueError:
+                print('Formato invalido!, use (HH:MM) por favor')
+        
+            
+
+    confirmacao = input('Deseja realmente cancelar esta aula? se sim digite:(sim) se não digite (não) >> ').lower().strip()
+    
+
+    if confirmacao == 'não':
+        input('Aperte enter para voltar....')
+        return
+    
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+
+
+        cursor.execute('''DELETE FROM tbl_agendamentos WHERE dia = %s AND horario = %s ''',(dia,horario))
+
+
+        if cursor.rowcount >0:
+            conexao.commit()
+            print('\aAula Cancelada com sucesso')
+        
+        else:
+            print('Nenhuma aula cancelada, ou id não foi encotrado')
+    
+
+         
+    except mysql.connector.Error as err:
+        print(f'Erro na deleção{err}')
+        input('\nPressione Enter para continuar...')
+        conexao.rollback()
+
+
+
+
+
+
+def menu_professor(professor_id):
+
+    limpar_tela()
+
+
+
+    try:
+            
+        while True:  
+                
+                limpar_tela()
+
+                print(f'Olá professor o que deseja fazer?')
+                print('1 - Visualizar aulas agendadas')
+                print('2 - Cancelar aula')
+                print('3 - Voltar') 
+                
+                opcao = int(input('Digite aqui o número da opção que deseja >> '))
+
+                if opcao == 1:
+                    gerenciar_aulas(professor_id)
+
+                elif opcao == 2:
+                    cancelar_aula(professor_id)
+
+                elif opcao == 3:
+                    return
+
+    except (ValueError, IndexError):
+            print('Insira apenas números!')
 
 
 
@@ -991,7 +1150,12 @@ def login_usuario():
     
 
         if tipo == 'professor':
-            cursor.execute('''SELECT id_professor FROM tbl_professores  WHERE id_usuario_professor = %s''', (usuario_id,))
+
+            if not bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
+                print('Senha incorreta!')
+                return
+
+            cursor.execute('''SELECT id_professor FROM tbl_professores WHERE id_usuario_professor = %s''', (usuario_id,))
             professor = cursor.fetchone()
     
             if not professor:
@@ -999,7 +1163,7 @@ def login_usuario():
                 input("Pressione Enter para voltar...")
                 return
     
-            gerenciar_aulas(professor['id_professor'])
+            menu_professor(professor['id_professor'])
             
 
         elif username == 'admin':
