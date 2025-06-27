@@ -1178,8 +1178,6 @@ def login_usuario():
         cursor.execute('SELECT id_usuario, senha, tipo_usuario FROM tbl_usuarios WHERE username = %s', (username,))
         usuario = cursor.fetchone()
 
-
-
         if not usuario:
             print('Usuário não encontrado!')    
             input('Digite enter para voltar')
@@ -1189,13 +1187,8 @@ def login_usuario():
         senha_hash = usuario['senha']
         tipo = usuario['tipo_usuario']
         
-        
-    
-        
         if not bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
                 print('Senha incorreta!')
-
-    
 
         if tipo == 'professor':
 
