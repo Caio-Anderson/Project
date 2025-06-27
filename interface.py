@@ -10,32 +10,35 @@ customtkinter.set_appearance_mode('dark')
 
 
 def cadastro():
-   
+ 
+
+    label = customtkinter.CTkLabel(app, width=270,height=380,fg_color="#17202a",corner_radius=15,bg_color='black',text='')
+    label.place(rely=0.4,relx=0.5,anchor='center')
 
 
-    mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='black',width=100, height=100,font=('arial',15),border_width=0)
-    mensagem.insert('0.0','CADASTRO')
+    mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#17202a',width=160, height=50,font=('Courier New',17),border_width=0,bg_color='#17202a')
+    mensagem.insert('0.0','Crie sua conta')
     mensagem.configure(state='disabled')
-    mensagem.place(rely=0.3,relx=0.5,anchor='center')  
+    mensagem.place(rely=0.28,relx=0.5,anchor='center')
+    mensagem.lift() 
 
-
-    nome_usuario = customtkinter.CTkEntry(app, placeholder_text='Nome',border_color='white')
-    nome_usuario.place(rely=0.35,relx=0.5,anchor='center')
+    nome_usuario = customtkinter.CTkEntry(app, placeholder_text='Digite seu nome...',width=230,fg_color='#212f3d',border_width=0.8)
+    nome_usuario.place(rely=0.33,relx=0.5,anchor='center')
  
 
-    email_usuario = customtkinter.CTkEntry(app, placeholder_text='email',border_color='white')
-    email_usuario.place(rely=0.4,relx=0.5,anchor='center')
+    email_usuario = customtkinter.CTkEntry(app, placeholder_text='Digite seu email...',border_color='gray',width=230,fg_color='#212f3d',border_width=0.8)
+    email_usuario.place(rely=0.37,relx=0.5,anchor='center')
 
 
-    telefone_usuario = customtkinter.CTkEntry(app, placeholder_text='telefone',border_color='white')
-    telefone_usuario.place(rely=0.45,relx=0.5,anchor='center')
+    telefone_usuario = customtkinter.CTkEntry(app, placeholder_text='Digite seu telefone...',border_color='gray',width=230,fg_color='#212f3d',border_width=0.8)
+    telefone_usuario.place(rely=0.41,relx=0.5,anchor='center')
 
  
-    usuario = customtkinter.CTkEntry(app, placeholder_text='Nome de usuário',border_color='white',placeholder_text_color='white',fg_color='#0e141a')
-    usuario.place(rely=0.5,relx=0.5,anchor='center')
+    usuario = customtkinter.CTkEntry(app, placeholder_text='Crie um nome de usuário...',border_color='gray',fg_color='#212f3d',width=230,border_width=0.8)
+    usuario.place(rely=0.45,relx=0.5,anchor='center')
 
-    senha_usuario = customtkinter.CTkEntry(app, placeholder_text='Senha', border_color='white',show='*')
-    senha_usuario.place(rely=0.55, relx=0.5, anchor='center')
+    senha_usuario = customtkinter.CTkEntry(app, placeholder_text='Crie uma senha...', border_color='gray',show='*',width=230,fg_color='#212f3d',border_width=0.8)
+    senha_usuario.place(rely=0.49, relx=0.5, anchor='center')
 
 
     def validar_cadastro():
@@ -128,11 +131,11 @@ def cadastro():
 
 
 
-    confirmacao = customtkinter.CTkButton(app, text='Confirmar', command=validar_cadastro,fg_color='white',text_color='black',hover_color='gray')
-    confirmacao.place(rely=0.6, relx=0.45, anchor='center')
+    confirmacao = customtkinter.CTkButton(app, text='Confirmar',command=validar_cadastro,fg_color='#58d68d',text_color='white',hover_color='#239b56',corner_radius=15,bg_color='#17202a',width=120)
+    confirmacao.place(rely=0.54, relx=0.465, anchor='center')
 
-    voltar = customtkinter.CTkButton(app, text='Voltar', fg_color='white',command=lambda: menu(),text_color='black',hover_color='gray')
-    voltar.place(rely=0.6, relx=0.54,anchor = 'center')
+    voltar = customtkinter.CTkButton(app, text='Voltar', fg_color='#48c9b0',command=lambda: menu(),text_color='white',hover_color='#17a589',corner_radius=15,bg_color='#17202a',width=120,)
+    voltar.place(rely=0.54, relx=0.535,anchor = 'center')
 
 
 def login():
@@ -191,6 +194,7 @@ def menu():
    
 app = customtkinter.CTk()
 app.geometry("1920x1080")
+app.title('Tompinha')
 imagem = customtkinter.CTkImage(light_image=Image.open('placeholder.jpg'), size=(1920,1080))
 menu()
 app.mainloop()
