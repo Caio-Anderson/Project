@@ -10,6 +10,16 @@ from dateutil.relativedelta import relativedelta
 
 customtkinter.set_appearance_mode('dark')
 
+def teste():
+
+  
+    label = customtkinter.CTkLabel(app,text='', width=180, height=270,corner_radius=15,bg_color='black',fg_color='#154360')
+    label.place(relx=0.5,rely=0.5,anchor='center')
+    
+    
+    voltar = customtkinter.CTkButton(app, text='Campo de testes', fg_color='#48c9b0',command=lambda: menu(),text_color='white',hover_color='#17a589',corner_radius=15,bg_color='#17202a',width=120)
+    voltar.place(rely=0.54, relx=0.535,anchor = 'center')
+
 
 def cadastro():
  
@@ -161,7 +171,7 @@ def matricula(usuario_id=None):
                 widget.destroy()
 
 
-    label = customtkinter.CTkLabel(app, width=270,height=380,fg_color="#17202a",corner_radius=15,bg_color='black',text='',)
+    label = customtkinter.CTkLabel(app, width=340,height=380,fg_color="#17202a",corner_radius=15,bg_color='black',text='',)
     label.place(rely=0.4,relx=0.5,anchor='center')
 
     mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#17202a',width=190, height=100,font=('Times New Roman',20),border_width=0,bg_color='#17202a')
@@ -172,13 +182,14 @@ def matricula(usuario_id=None):
     mensagem.lift() 
 
 
-    pagamento = customtkinter.CTkOptionMenu(app,values=['Pix','Cartão','Boleto'])
+    tempo = customtkinter.CTkOptionMenu(app,values=['1 Mês','2 Meses','3 Meses','4 Meses','5 Meses','6 Meses','7 Meses','8 Meses','9 Meses','10 Meses','11 Meses','12 Meses'],fg_color='#bb8fce',dropdown_fg_color='#e8daef',button_color='#bb8fce', button_hover_color='#bb8fce',
+                                        dropdown_hover_color='#bb8fce',dropdown_text_color='black')
+    tempo.set('Selecione o tempo de duração da sua matrícula')
+    tempo.place(relx=0.5,rely=0.4,anchor='center')
+
+    pagamento = customtkinter.CTkOptionMenu(app,values=['Pix','Cartão','Boleto'],fg_color='#bb8fce',button_color='#bb8fce',dropdown_fg_color='#e8daef', dropdown_text_color='black', button_hover_color='#bb8fce', dropdown_hover_color='#bb8fce', )
     pagamento.set('Métodos de pagamento')
     pagamento.place(relx=0.5,rely=0.45,anchor='center')
-
-    tempo = customtkinter.CTkOptionMenu(app,values=['1 Mês','2 Meses','3 Meses','4 Meses','5 Meses','6 Meses','7 Meses','8 Meses','9 Meses','10 Meses','11 Meses','12 Meses'])
-    tempo.set('Duração')
-    tempo.place(relx=0.5,rely=0.4,anchor='center')
 
 
     def validar_matricula(usuario_id):
@@ -230,7 +241,7 @@ def matricula(usuario_id=None):
             
             conexao.commit()
             if conexao.commit:
-                mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#17202a',width=238, height=40,font=('arial',15),border_width=0.8, corner_radius=15,bg_color='black')
+                mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#17202a',width=250, height=40,font=('arial',15),border_width=0.8, corner_radius=15,bg_color='black')
                 mensagem.insert('0.0','Matricula efetuada com sucesso!')
                 mensagem.configure(state='disabled')
                 mensagem.place(rely=0.65,relx=0.5,anchor='center')
@@ -244,12 +255,20 @@ def matricula(usuario_id=None):
         conexao.close()
             
     
-    confirmacao = customtkinter.CTkButton(app, text='Confirmar',command=lambda: validar_matricula(usuario_id),fg_color='#58d68d',text_color='white',hover_color='#239b56',corner_radius=15,bg_color='#17202a',width=120)
+    confirmacao = customtkinter.CTkButton(app, text='Matricular-se',command=lambda: validar_matricula(usuario_id),fg_color='#58d68d',text_color='white',hover_color='#239b56',corner_radius=15,bg_color='#17202a',width=120)
     confirmacao.place(rely=0.54, relx=0.465, anchor='center')
 
     
     voltar = customtkinter.CTkButton(app, text='Voltar', fg_color='#48c9b0',command=lambda: central_usuario(usuario_id),text_color='white',hover_color='#17a589',corner_radius=15,bg_color='#17202a',width=120)
     voltar.place(rely=0.54, relx=0.535,anchor = 'center')
+
+
+
+def agendamento(usuario_id):
+
+
+    voltar = customtkinter.CTkButton(app, text='Voltar', fg_color='#48c9b0',command=lambda: central_usuario(usuario_id),text_color='white',hover_color='#17a589',corner_radius=15,bg_color='#154360',width=120)
+    voltar.place(rely=0.56, relx=0.5,anchor = 'center')
 
 
 
@@ -267,8 +286,40 @@ def central_usuario(usuario_id):
     matricular = customtkinter.CTkButton(app,text='Matricula',text_color='white',corner_radius=15,bg_color='#154360',width=120,fg_color='#52be80',hover_color='#1e8449', command=lambda:matricula(usuario_id))
     matricular.place(rely=0.44,relx=0.5,anchor='center')
 
-    agendamento = customtkinter.CTkButton(app,text='Agendamento', text_color='white',corner_radius=15,bg_color='#154360',width=120,fg_color='#138d75',hover_color='#0e6655')
-    agendamento.place(rely=0.5,relx=0.5,anchor='center')
+    def validar_matricula(usuario_id):
+
+        try:
+
+            conexao = conectar_banco()
+            cursor = conexao.cursor()
+
+
+            cursor.execute('''SELECT 1 FROM tbl_matriculas WHERE usuario_id = %s ''',(usuario_id,))
+            resultado = cursor.fetchone()
+
+            if not resultado:
+                
+                mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#154360',width=220, height=40,font=('arial',15),border_width=0.5, corner_radius=15,bg_color='black', border_color='Black')
+                mensagem.insert('0.0','Você Não está matriculado!')
+                mensagem.configure(state='disabled')
+                mensagem.place(rely=0.7,relx=0.5,anchor='center') 
+                mensagem.after(2000,mensagem.destroy)
+                return
+            
+            else:
+               for widget in app.winfo_children():
+                    if not hasattr(widget, 'persistent'):
+                        widget.destroy()
+
+                    agendamento(usuario_id)
+
+                
+        except Error as e:
+            raise e
+    
+    
+    agendar = customtkinter.CTkButton(app,text='Agendamento', text_color='white',corner_radius=15,bg_color='#154360',width=120,fg_color='#138d75',hover_color='#0e6655', command=lambda:validar_matricula(usuario_id))
+    agendar.place(rely=0.5,relx=0.5,anchor='center')
 
     voltar = customtkinter.CTkButton(app, text='Voltar', fg_color='#48c9b0',command=lambda: menu(),text_color='white',hover_color='#17a589',corner_radius=15,bg_color='#154360',width=120)
     voltar.place(rely=0.56, relx=0.5,anchor = 'center')
@@ -295,9 +346,6 @@ def login():
     
     senha_usuario = customtkinter.CTkEntry(app, placeholder_text='Senha', show='*')
     senha_usuario.place(relx=0.5,rely=0.41,anchor='center')
-
-
-    
     
     try:
         
@@ -309,12 +357,28 @@ def login():
 
             username = login_usuario.get()
             senha_get = senha_usuario.get()
+
+            if not username:
+                login_usuario.configure(border_color="red")
+                mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#17202a',width=195, height=40,font=('arial',15),border_width=0.8, corner_radius=15,bg_color='black')
+                mensagem.insert('0.0','Insira algo!')
+                mensagem.configure(state='disabled')
+                mensagem.place(rely=0.65,relx=0.5,anchor='center')
+                mensagem.after(2000,mensagem.destroy)
+                return
+
+            if not senha_get:
+                senha_usuario.configure(border_color="red")
+                mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#17202a',width=195, height=40,font=('arial',15),border_width=0.8, corner_radius=15,bg_color='black')
+                mensagem.insert('0.0','Insira algo!')
+                mensagem.configure(state='disabled')
+                mensagem.place(rely=0.65,relx=0.5,anchor='center')
+                mensagem.after(2000,mensagem.destroy)
+                return
             
             cursor.execute('SELECT id_usuario, senha, tipo_usuario FROM tbl_usuarios WHERE username = %s', (username,))
             usuario = cursor.fetchone()
         
-        
-
             if not usuario:
                 mensagem = customtkinter.CTkTextbox(app, text_color='white',fg_color='#17202a',width=195, height=40,font=('arial',15),border_width=0.8, corner_radius=15,bg_color='black')
                 mensagem.insert('0.0','Usuário não cadastrado!')
@@ -355,7 +419,6 @@ def login():
             raise e
 
   
-
     botao_login = customtkinter.CTkButton(app, text='Login',fg_color='#58d68d',text_color='white',hover_color='#239b56',corner_radius=15,bg_color='#17202a',width=120,command=validar_login)
     botao_login.place(rely=0.47,relx=0.465,anchor='center')
 
@@ -363,7 +426,6 @@ def login():
     voltar.place(rely=0.47, relx=0.535,anchor = 'center')
 
 def troca_de_janela(opcao_selecionada):
-
 
     for widget in app.winfo_children():
      if not hasattr(widget, 'persistent'): 
@@ -374,6 +436,9 @@ def troca_de_janela(opcao_selecionada):
 
     elif opcao_selecionada == 'Cadastro':
        cadastro()
+
+    elif opcao_selecionada == "Teste":
+        teste()
 
     elif opcao_selecionada == 'Sair':
        app.quit()
@@ -395,12 +460,9 @@ def menu():
     home = customtkinter.CTkLabel(app,image=saudacao,text="" )
     home.place(anchor='center', relx=0.5,rely=0.5)
 
-
-
-    optionmenu = customtkinter.CTkOptionMenu(app, values=["login", "Cadastro", "Sair"],fg_color='black',button_color='black',dropdown_fg_color='black',corner_radius=0, command=troca_de_janela)   
+    optionmenu = customtkinter.CTkOptionMenu(app, values=["login", "Cadastro", "Sair", "Teste"],fg_color='black',button_color='black',dropdown_fg_color='black',corner_radius=0, command=troca_de_janela)   
     optionmenu.set("Opções")
     optionmenu.place(relx=0.5,rely=0.7,anchor='s')
-
 
     return app
    
